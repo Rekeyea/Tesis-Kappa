@@ -19,8 +19,28 @@ CREATE TABLE heartrate_source (
 
 ```sql
 SELECT 
-    user_id,
-    heart_rate,
+    `user_id`,
+    `heart_rate`,
     `timestamp`
 FROM heartrate_source;
 ```
+
+
+CREATE TABLE heartrate_generator (
+    `user_id` STRING,
+    `heart_rate` INT,
+    `timestamp` TIMESTAMP_LTZ(3)
+) WITH (
+    'connector' = 'datagen',
+    'rows-per-second' = '5',
+    'fields.user_id.length' = '10',
+    'fields.heart_rate.min' = '60',
+    'fields.heart_rate.max' = '180'
+);
+
+INSERT INTO heartrate_source
+SELECT 
+    `user_id`,
+    `heart_rate`,
+    `timestamp`
+FROM heartrate_generator;
