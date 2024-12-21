@@ -1,0 +1,43 @@
+services:
+  jobmanager:
+    image: flink:1.20.0
+    container_name: jobmanager
+    extra_hosts:
+      - "pulsar:172.20.1.20"
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+      - HADOOP_CLASSPATH='hadoop classpath'
+    ports:
+      - "38081:8081"
+    command: jobmanager
+    volumes:
+      - ./flink/jars/flink-sql-connector-kafka-3.3.0-1.20.jar:/opt/flink/lib/flink-sql-connector-kafka-3.3.0-1.20.jar
+    deploy:
+          replicas: 1
+    networks:
+      kappa:
+        ipv4_address: 172.20.3.2
+  
+
+  taskmanager:
+    image: flink:1.20.0
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+      - HADOOP_CLASSPATH='hadoop classpath'
+      - AWS_ACCESS_KEY_ID=minio
+      - AWS_SECRET_ACCESS_KEY=minio123
+      - AWS_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+      - S3_ENDPOINT=http://minio:9000
+      - S3_PATH_STYLE_ACCESS=true
+    extra_hosts:
+      - "pulsar:172.20.1.20"
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    volumes:
+      - ./flink/jars/flink-sql-connector-kafka-3.3.0-1.20.jar:/opt/flink/lib/flink-sql-connector-kafka-3.3.0-1.20.jar
+    deploy:
+          replicas: 6
+    networks:
+      - kappa
