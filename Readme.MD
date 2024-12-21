@@ -2,6 +2,7 @@
 
 # Kafka Flink SQL
 
+```sql
 CREATE TABLE heartrate_source (
   `user_id` STRING,
   `heart_rate` INT
@@ -13,8 +14,11 @@ CREATE TABLE heartrate_source (
   'scan.startup.mode' = 'earliest-offset',
   'format' = 'json'
 );
+```
 
+```sql
 SELECT 
     user_id,
     heart_rate
 FROM heartrate_source;
+```
