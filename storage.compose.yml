@@ -1,125 +1,40 @@
-version: '3.8'
-
 services:
-  minio1:
-    image: minio/minio:latest
-    hostname: minio1
-    command: server --console-address ":9001" http://minio{1...4}/data{1...2}
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-      # Required for distributed mode
-      - MINIO_ACCESS_KEY=minioaccess
-      - MINIO_SECRET_KEY=miniosecret
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    volumes:
-      - minio1-data1:/data1
-      - minio1-data2:/data2
-    networks:
-      kappa:
-        ipv4_address: 172.20.2.2
-    ports:
-      - "9002:9001"
-      - "9092:9000"
-
-  minio2:
-    image: minio/minio:latest
-    hostname: minio2
-    command: server --console-address ":9001" http://minio{1...4}/data{1...2}
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-      - MINIO_ACCESS_KEY=minioaccess
-      - MINIO_SECRET_KEY=miniosecret
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    volumes:
-      - minio2-data1:/data1
-      - minio2-data2:/data2
-    networks:
-      kappa:
-        ipv4_address: 172.20.2.3
-    ports:
-      - "9003:9001"
-      - "9093:9000"
-
-  minio3:
-    image: minio/minio:latest
-    hostname: minio3
-    command: server --console-address ":9001" http://minio{1...4}/data{1...2}
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-      - MINIO_ACCESS_KEY=minioaccess
-      - MINIO_SECRET_KEY=miniosecret
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    volumes:
-      - minio3-data1:/data1
-      - minio3-data2:/data2
-    networks:
-      kappa:
-        ipv4_address: 172.20.2.4
-    ports:
-      - "9004:9001"
-      - "9094:9000"
-
-  minio4:
-    image: minio/minio:latest
-    hostname: minio4
-    command: server --console-address ":9001" http://minio{1...4}/data{1...2}
-    environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-      - MINIO_ACCESS_KEY=minioaccess
-      - MINIO_SECRET_KEY=miniosecret
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    volumes:
-      - minio4-data1:/data1
-      - minio4-data2:/data2
-    networks:
-      kappa:
-        ipv4_address: 172.20.2.5
-    ports:
-      - "9005:9001"
-      - "9095:9000"
-
   minio:
-    image: nginx:latest
-    volumes:
-      - ./minio/nginx.conf:/etc/nginx/nginx.conf:ro
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+    image: minio/minio:latest
+    hostname: minio
+    container_name: minio
+    command: server --console-address ":9001" --address ":9000" /data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
     networks:
       kappa:
-        ipv4_address: 172.20.2.255
+        ipv4_address: 172.20.5.2
+    ports:
+      - "49000:9000"
+      - "49001:9001"
+    volumes:
+      - minio-data:/data
+
+  createbuckets:
+    image: minio/mc
     depends_on:
-      - minio1
-      - minio2
-      - minio3
-      - minio4
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10 &&
+      mc alias set myminio http://minio:9000 minioadmin minioadmin &&
+      mc mb myminio/storage --ignore-existing &&
+      mc anonymous set public myminio/storage &&
+      exit 0
+      "
+    networks:
+      - kappa
 
 volumes:
-  minio1-data1:
-  minio1-data2:
-  minio2-data1:
-  minio2-data2:
-  minio3-data1:
-  minio3-data2:
-  minio4-data1:
-  minio4-data2:
+  minio-data:

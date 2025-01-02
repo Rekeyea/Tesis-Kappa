@@ -91,6 +91,7 @@ services:
             - zookeeper-1
             - zookeeper-2
             - zookeeper-3
+            - createbuckets
         environment:
             KAFKA_LISTENERS: PLAINTEXT://kafka-1:19091, EXTERNAL://0.0.0.0:9091
             KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
@@ -111,6 +112,18 @@ services:
             KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
             KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 3
             KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka-1:19091,kafka-2:19092,kafka-3:19093
+
+            KAFKA_LOG_SEGMENT_BYTES: '104857600'
+            KAFKA_CONFLUENT_TIER_FEATURE: 'true'
+            KAFKA_CONFLUENT_TIER_ENABLE: 'true'
+            KAFKA_CONFLUENT_TIER_BACKEND: 'S3'
+            KAFKA_CONFLUENT_TIER_S3_BUCKET: 'storage'
+            AWS_ACCESS_KEY_ID: 'minioadmin'
+            AWS_SECRET_ACCESS_KEY: 'minioadmin'
+            KAFKA_CONFLUENT_TIER_S3_AWS_ENDPOINT_OVERRIDE: 'http://minio:9000'
+            KAFKA_CONFLUENT_TIER_S3_REGION: 'us-east-1'
+            KAFKA_CONFLUENT_TIER_S3_FORCE_PATH_STYLE_ACCESS: 'true'
+            KAFKA_CONFLUENT_TIER_S3_SSE_ALGORITHM: 'none'
         cap_add:
             - NET_ADMIN
         ports:
@@ -138,6 +151,7 @@ services:
             - zookeeper-1
             - zookeeper-2
             - zookeeper-3
+            - createbuckets
         environment:
             KAFKA_LISTENERS: PLAINTEXT://kafka-2:19092, EXTERNAL://0.0.0.0:9092
             KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
@@ -158,6 +172,18 @@ services:
             KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
             KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 3
             KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka-1:19091,kafka-2:19092,kafka-3:19093
+
+            KAFKA_LOG_SEGMENT_BYTES: '104857600'
+            KAFKA_CONFLUENT_TIER_FEATURE: 'true'
+            KAFKA_CONFLUENT_TIER_ENABLE: 'true'
+            KAFKA_CONFLUENT_TIER_BACKEND: 'S3'
+            KAFKA_CONFLUENT_TIER_S3_BUCKET: 'storage'
+            AWS_ACCESS_KEY_ID: 'minioadmin'
+            AWS_SECRET_ACCESS_KEY: 'minioadmin'
+            KAFKA_CONFLUENT_TIER_S3_AWS_ENDPOINT_OVERRIDE: 'http://minio:9000'
+            KAFKA_CONFLUENT_TIER_S3_REGION: 'us-east-1'
+            KAFKA_CONFLUENT_TIER_S3_FORCE_PATH_STYLE_ACCESS: 'true'
+            KAFKA_CONFLUENT_TIER_S3_SSE_ALGORITHM: 'none'
         cap_add:
             - NET_ADMIN
         ports:
@@ -185,6 +211,7 @@ services:
             - zookeeper-1
             - zookeeper-2
             - zookeeper-3
+            - createbuckets
         environment:
             KAFKA_LISTENERS: PLAINTEXT://kafka-3:19093, EXTERNAL://0.0.0.0:9093
             KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
@@ -205,6 +232,17 @@ services:
             KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181,zookeeper-2:2181,zookeeper-3:2181
             KAFKA_CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 3
             KAFKA_CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka-1:19091,kafka-2:19092,kafka-3:19093
+
+            KAFKA_LOG_SEGMENT_BYTES: '104857600'
+            KAFKA_CONFLUENT_TIER_FEATURE: 'true'
+            KAFKA_CONFLUENT_TIER_ENABLE: 'true'
+            KAFKA_CONFLUENT_TIER_BACKEND: 'S3'
+            KAFKA_CONFLUENT_TIER_S3_BUCKET: 'storage'
+            AWS_ACCESS_KEY_ID: 'minioadmin'
+            AWS_SECRET_ACCESS_KEY: 'minioadmin'
+            KAFKA_CONFLUENT_TIER_S3_AWS_ENDPOINT_OVERRIDE: 'http://minio:9000'
+            KAFKA_CONFLUENT_TIER_S3_REGION: 'us-east-1'
+            KAFKA_CONFLUENT_TIER_S3_FORCE_PATH_STYLE_ACCESS: 'true'
         cap_add:
             - NET_ADMIN
         ports:
