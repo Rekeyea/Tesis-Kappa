@@ -30,7 +30,9 @@ services:
       sleep 10 &&
       mc alias set myminio http://minio:9000 minioadmin minioadmin &&
       mc mb myminio/storage --ignore-existing &&
+      mc mb myminio/cold --ignore-existing &&
       mc anonymous set public myminio/storage &&
+      mc anonymous set public myminio/cold &&
       exit 0
       "
     networks:

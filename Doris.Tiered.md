@@ -35,3 +35,7 @@ CREATE TABLE IF NOT EXISTS Test (
     "storage_policy" = "coldness"
 );
 ```
+
+```sql
+INSERT INTO Test (V) VALUES (1), (2), (3), (4), (5);
+```
