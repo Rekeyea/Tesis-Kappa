@@ -124,6 +124,7 @@ services:
             KAFKA_CONFLUENT_TIER_S3_REGION: 'us-east-1'
             KAFKA_CONFLUENT_TIER_S3_FORCE_PATH_STYLE_ACCESS: 'true'
             KAFKA_CONFLUENT_TIER_S3_SSE_ALGORITHM: 'none'
+            # KAFKA_CONFLUENT_TIER_S3_SSE_TYPE: 'S3'
         cap_add:
             - NET_ADMIN
         ports:
@@ -184,6 +185,7 @@ services:
             KAFKA_CONFLUENT_TIER_S3_REGION: 'us-east-1'
             KAFKA_CONFLUENT_TIER_S3_FORCE_PATH_STYLE_ACCESS: 'true'
             KAFKA_CONFLUENT_TIER_S3_SSE_ALGORITHM: 'none'
+            # KAFKA_CONFLUENT_TIER_S3_SSE_TYPE: 'S3'
         cap_add:
             - NET_ADMIN
         ports:
@@ -243,6 +245,8 @@ services:
             KAFKA_CONFLUENT_TIER_S3_AWS_ENDPOINT_OVERRIDE: 'http://minio:9000'
             KAFKA_CONFLUENT_TIER_S3_REGION: 'us-east-1'
             KAFKA_CONFLUENT_TIER_S3_FORCE_PATH_STYLE_ACCESS: 'true'
+            KAFKA_CONFLUENT_TIER_S3_SSE_ALGORITHM: 'none'
+            # KAFKA_CONFLUENT_TIER_S3_SSE_TYPE: 'S3'
         cap_add:
             - NET_ADMIN
         ports:

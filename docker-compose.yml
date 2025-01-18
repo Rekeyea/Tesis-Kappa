@@ -2,9 +2,9 @@ version: '3.8'
 
 include:
 - ./storage.compose.yml
-# - ./kafka.compose.yml
-# - ./flink.compose.yml
-- ./doris.compose.yml
+- ./kafka.compose.yml
+#- ./flink.compose.yml
+#- ./doris.compose.yml
 # - ./monitoring.compose.yml
 
 networks:
