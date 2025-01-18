@@ -9,16 +9,14 @@ scrape_configs:
     static_configs:
       - targets:
         - node-exporter:9100
-  - job_name: 'broker'
+  - job_name: 'kafka'
     static_configs:
-      - targets: ['broker:8080']
-    metrics_path: '/metrics'
-    scheme: 'http'
-  - job_name: 'topics'
-    static_configs:
-      - targets: ['broker:8080']
-    metrics_path: '/metrics/topic'
-    scheme: 'http'
+      - targets:
+        - 'kafka-1:8091'
+        - 'kafka-2:8091'
+        - 'kafka-3:8091'
+    scrape_interval: 15s
+    metrics_path: /metrics
 
 
     
