@@ -10,10 +10,10 @@ services:
       - doris-fe-meta:/opt/apache-doris/fe/doris-meta/
       - doris-fe-log:/opt/apache-doris/fe/log/
     ports:
-      - "18030:8030"
-      - "19020:9020"
-      - "19030:9030"
-      - "19010:9010"
+      - "10300:8030"
+      - "10301:9020"
+      - "10302:9030"
+      - "10303:9010"
     networks:
       kappa:
         ipv4_address: 172.20.4.2
@@ -33,10 +33,6 @@ services:
     volumes:
       - doris-be-storage-1:/opt/apache-doris/be/storage/
       - doris-be-script-1:/docker-entrypoint-initdb.d/
-    ports:
-      - "19050:9050"
-      - "19060:9060"
-      - "19070:9070"
     ulimits:
       nofile:
         soft: 655350
@@ -54,10 +50,6 @@ services:
     volumes:
       - doris-be-storage-2:/opt/apache-doris/be/storage/
       - doris-be-script-2:/docker-entrypoint-initdb.d/
-    ports:
-      - "29050:9050"
-      - "29060:9060"
-      - "29070:9070"
     ulimits:
       nofile:
         soft: 655350
@@ -75,10 +67,6 @@ services:
     volumes:
       - doris-be-storage-3:/opt/apache-doris/be/storage/
       - doris-be-script-3:/docker-entrypoint-initdb.d/
-    ports:
-      - "39050:9050"
-      - "39060:9060"
-      - "39070:9070"
     ulimits:
       nofile:
         soft: 655350

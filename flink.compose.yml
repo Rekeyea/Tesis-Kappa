@@ -2,8 +2,6 @@ services:
   jobmanager:
     image: flink:1.20.0
     container_name: jobmanager
-    extra_hosts:
-      - "pulsar:172.20.1.20"
     environment:
       - JOB_MANAGER_RPC_ADDRESS=jobmanager
       - HADOOP_CLASSPATH='hadoop classpath'
@@ -31,8 +29,6 @@ services:
       - AWS_DEFAULT_REGION=us-east-1
       - S3_ENDPOINT=http://minio:9000
       - S3_PATH_STYLE_ACCESS=true
-    extra_hosts:
-      - "pulsar:172.20.1.20"
     depends_on:
       - jobmanager
     command: taskmanager
