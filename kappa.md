@@ -4,22 +4,9 @@ Initial Topic: raw.measurements
 -- Source table for all raw measurements
 CREATE TABLE raw_measurements (
     id STRING,
-    patient_id STRING,
     measurement_type STRING,
     device_id STRING,
-    readings ROW(
-        timestamp TIMESTAMP(3),
-        raw_value DOUBLE,                    -- Used by RR, SpO2, HR, Temp
-        systolic DOUBLE,                     -- Used by BP
-        diastolic DOUBLE,                    -- Used by BP
-        signal_quality DOUBLE,               -- Used by RR, HR
-        perfusion_index DOUBLE,              -- Used by SpO2
-        motion_detected BOOLEAN,             -- Used by RR, SpO2, BP, HR
-        measurement_quality DOUBLE,          -- Used by BP, Temp
-        stabilization_time DOUBLE,           -- Used by Temp
-        acvpu_value STRING,                  -- Used by Consciousness
-        assessor_id STRING                   -- Used by Consciousness
-    )
+    raw_value STRING
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'raw.measurements',
@@ -31,21 +18,9 @@ CREATE TABLE raw_measurements (
 -- Dynamic routing to measurement-specific topics
 CREATE TABLE measurement_sink (
     id STRING,
-    patient_id STRING,
     device_id STRING,
-    readings ROW(
-        timestamp TIMESTAMP(3),
-        raw_value DOUBLE,
-        systolic DOUBLE,
-        diastolic DOUBLE,
-        signal_quality DOUBLE,
-        perfusion_index DOUBLE,
-        motion_detected BOOLEAN,
-        measurement_quality DOUBLE,
-        stabilization_time DOUBLE,
-        acvpu_value STRING,
-        assessor_id STRING
-    )
+    numeric_value DOUBLE,
+    string_value STRING
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.${lowercase(measurement_type)}',
