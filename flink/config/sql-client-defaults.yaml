@@ -1,0 +1,49 @@
+execution:
+  planner: blink
+  type: streaming
+  result-mode: table
+  parallelism: 1
+
+catalogs:
+   # PostgreSQL catalog
+   - name: postgres_catalog
+     type: jdbc
+     default-database: postgres
+     username: ${env:POSTGRES_USER}
+     password: ${env:POSTGRES_PASSWORD}
+     base-url: "jdbc:postgresql://postgres:5432/"
+     factory: org.apache.flink.connector.jdbc.catalog.JdbcCatalog
+     
+   # Kafka catalog for streaming data
+   - name: kafka_catalog
+     type: generic_in_memory
+     properties:
+       connector: kafka
+       properties.bootstrap.servers: kafka:9092
+       format: json
+       scan.startup.mode: latest-offset
+       
+   # Default in-memory catalog for temporary tables
+   - name: default_catalog
+     type: generic_in_memory
+     default: true
+
+configuration:
+  pipeline.name: "Flink SQL Gateway Session"
+  table.exec.state.ttl: 3600000
+  state.backend: rocksdb
+  state.checkpoints.dir: file:///tmp/flink-checkpoints
+  state.savepoints.dir: file:///tmp/flink-savepoints
+  
+deployment:
+  response-timeout: 5000
+  
+environment:
+  files:
+    - /opt/flink/conf/flink-conf.yaml
+  
+  dependencies:
+    - /opt/flink/lib/flink-sql-connector-kafka-3.3.0-1.20.jar
+    - /opt/flink/lib/flink-doris-connector-1.20-24.1.0.jar
+    - /opt/flink/lib/flink-connector-jdbc-3.2.0-1.19.jar
+    - /opt/flink/lib/postgresql-42.7.5.jar

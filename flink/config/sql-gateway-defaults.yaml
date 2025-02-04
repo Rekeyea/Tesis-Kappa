@@ -1,0 +1,10 @@
+execution:
+  planner: blink
+
+catalogs:
+  - name: kappa_catalog
+    type: jdbc
+    default-database: flink_metadata
+    username: flink
+    password: flinkpassword
+    base-url: jdbc:postgresql://postgres:5432
