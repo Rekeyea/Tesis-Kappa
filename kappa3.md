@@ -1,4 +1,34 @@
 ```sql
+-- Create ticker with proper timestamp and watermark
+CREATE TABLE minute_ticker (
+    ts TIMESTAMP(3),  -- Timestamp column
+    WATERMARK FOR ts AS ts - INTERVAL '5' SECOND  -- Define watermark
+) WITH (
+    'connector' = 'datagen',  -- Use datagen connector
+    'rows-per-second' = '1'   -- Generate 1 row per second
+);
+
+-- Create sequence table
+CREATE TABLE number_sequence (
+    val INT
+) WITH (
+    'connector' = 'datagen',  -- Use datagen connector
+    'fields.val.kind' = 'sequence',  -- Generate a sequence of numbers
+    'fields.val.start' = '1',        -- Start from 1
+    'fields.val.end' = '10'           -- End at 5
+);
+
+-- Query with tumbling window
+SELECT 
+    CONCAT('P', LPAD(CAST(n.val AS STRING), 4, '0')) AS patient_id,
+    TUMBLE_START(t.ts, INTERVAL '1' MINUTE) AS window_start,
+    TUMBLE_END(t.ts, INTERVAL '1' MINUTE) AS window_end
+FROM minute_ticker AS t
+CROSS JOIN number_sequence AS n
+GROUP BY
+    n.val,
+    TUMBLE(t.ts, INTERVAL '1' MINUTE);
+
 
 -- Raw measurements table with original timestamps and device metrics
 CREATE TABLE raw_measurements (
@@ -886,588 +916,13 @@ WINDOW w AS (
     ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 );
 
--- #################################################################################
 
-
--- ******** WORKING QUERY *************
--- Define a common table expression (CTE) for each scores table with a tumbling window
-WITH respiratory_rate_window AS (
-    SELECT
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_avg,
-        measurement_min,
-        measurement_max,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_respiratory_rate
-    GROUP BY
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_avg,
-        measurement_min,
-        measurement_max,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-),
-oxygen_saturation_window AS (
-    SELECT
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_avg,
-        measurement_min,
-        measurement_max,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_oxygen_saturation
-    GROUP BY
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_avg,
-        measurement_min,
-        measurement_max,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-),
-blood_pressure_window AS (
-    SELECT
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_avg,
-        measurement_min,
-        measurement_max,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_blood_pressure_systolic
-    GROUP BY
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_avg,
-        measurement_min,
-        measurement_max,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-),
-heart_rate_window AS (
-    SELECT
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_avg,
-        measurement_min,
-        measurement_max,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_heart_rate
-    GROUP BY
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_avg,
-        measurement_min,
-        measurement_max,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-),
-temperature_window AS (
-    SELECT
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_avg,
-        measurement_min,
-        measurement_max,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_temperature
-    GROUP BY
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_avg,
-        measurement_min,
-        measurement_max,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-),
-consciousness_window AS (
-    SELECT
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_consciousness
-    GROUP BY
-        patient_id,
-        measurement_type,
-        measured_value,
-        measurement_count,
-        quality_weight,
-        raw_news2_score,
-        adjusted_score,
-        confidence,
-        freshness_weight,
-        measurement_status,
-        measurement_timestamp,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-)
-
--- Join all tables within the same window
-SELECT
-    rr.patient_id,
-    rr.window_start,
-    rr.window_end,
-    rr.measurement_type AS respiratory_rate_type,
-    rr.measured_value AS respiratory_rate_value,
-    rr.adjusted_score AS respiratory_rate_score,
-    os.measurement_type AS oxygen_saturation_type,
-    os.measured_value AS oxygen_saturation_value,
-    os.adjusted_score AS oxygen_saturation_score,
-    bp.measurement_type AS blood_pressure_type,
-    bp.measured_value AS blood_pressure_value,
-    bp.adjusted_score AS blood_pressure_score,
-    hr.measurement_type AS heart_rate_type,
-    hr.measured_value AS heart_rate_value,
-    hr.adjusted_score AS heart_rate_score,
-    temp.measurement_type AS temperature_type,
-    temp.measured_value AS temperature_value,
-    temp.adjusted_score AS temperature_score,
-    cons.measurement_type AS consciousness_type,
-    cons.measured_value AS consciousness_value,
-    cons.adjusted_score AS consciousness_score
-FROM respiratory_rate_window rr
-JOIN oxygen_saturation_window os
-    ON rr.patient_id = os.patient_id
-    AND rr.window_start = os.window_start
-    AND rr.window_end = os.window_end
-JOIN blood_pressure_window bp
-    ON rr.patient_id = bp.patient_id
-    AND rr.window_start = bp.window_start
-    AND rr.window_end = bp.window_end
-JOIN heart_rate_window hr
-    ON rr.patient_id = hr.patient_id
-    AND rr.window_start = hr.window_start
-    AND rr.window_end = hr.window_end
-JOIN temperature_window temp
-    ON rr.patient_id = temp.patient_id
-    AND rr.window_start = temp.window_start
-    AND rr.window_end = temp.window_end
-JOIN consciousness_window cons
-    ON rr.patient_id = cons.patient_id
-    AND rr.window_start = cons.window_start
-    AND rr.window_end = cons.window_end;
-
--- ************************************
-
--- Define a common table expression (CTE) for each scores table with a tumbling window
-WITH respiratory_rate_window AS (
-    SELECT
-        patient_id,
-        measured_value AS respiratory_rate_value,
-        adjusted_score AS adjusted_respiratory_rate_score,
-        raw_news2_score AS respiratory_rate_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_respiratory_rate
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-),
-oxygen_saturation_window AS (
-    SELECT
-        patient_id,
-        measured_value AS oxygen_saturation_value,
-        adjusted_score AS adjusted_oxygen_saturation_score,
-        raw_news2_score AS oxygen_saturation_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_oxygen_saturation
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-),
-blood_pressure_window AS (
-    SELECT
-        patient_id,
-        measured_value AS blood_pressure_value,
-        adjusted_score AS adjusted_blood_pressure_score,
-        raw_news2_score AS blood_pressure_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_blood_pressure_systolic
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-),
-heart_rate_window AS (
-    SELECT
-        patient_id,
-        measured_value AS heart_rate_value,
-        adjusted_score AS adjusted_heart_rate_score,
-        raw_news2_score AS heart_rate_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_heart_rate
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-),
-temperature_window AS (
-    SELECT
-        patient_id,
-        measured_value AS temperature_value,
-        adjusted_score AS adjusted_temperature_score,
-        raw_news2_score AS temperature_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_temperature
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-),
-consciousness_window AS (
-    SELECT
-        patient_id,
-        measured_value AS consciousness_value,
-        adjusted_score AS adjusted_consciousness_score,
-        raw_news2_score AS consciousness_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '5' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '5' MINUTE) AS window_end
-    FROM scores_consciousness
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '5' MINUTE)
-)
-
--- Main SELECT query to join all tables within the same window and calculate totals
-SELECT
-    rr.patient_id,
-    -- Raw measurements
-    rr.respiratory_rate_value,
-    os.oxygen_saturation_value,
-    bp.blood_pressure_value,
-    hr.heart_rate_value,
-    temp.temperature_value,
-    cons.consciousness_value,
-    -- Raw NEWS2 scores
-    rr.respiratory_rate_score,
-    os.oxygen_saturation_score,
-    bp.blood_pressure_score,
-    hr.heart_rate_score,
-    temp.temperature_score,
-    cons.consciousness_score,
-    -- Raw NEWS2 total
-    COALESCE(rr.respiratory_rate_score, 0) +
-    COALESCE(os.oxygen_saturation_score, 0) +
-    COALESCE(bp.blood_pressure_score, 0) +
-    COALESCE(hr.heart_rate_score, 0) +
-    COALESCE(temp.temperature_score, 0) +
-    COALESCE(cons.consciousness_score, 0) AS raw_news2_total,
-    -- Adjusted gdNEWS2 scores
-    rr.adjusted_respiratory_rate_score,
-    os.adjusted_oxygen_saturation_score,
-    bp.adjusted_blood_pressure_score,
-    hr.adjusted_heart_rate_score,
-    temp.adjusted_temperature_score,
-    cons.adjusted_consciousness_score,
-    -- gdNEWS2 total
-    COALESCE(rr.adjusted_respiratory_rate_score, 0) +
-    COALESCE(os.adjusted_oxygen_saturation_score, 0) +
-    COALESCE(bp.adjusted_blood_pressure_score, 0) +
-    COALESCE(hr.adjusted_heart_rate_score, 0) +
-    COALESCE(temp.adjusted_temperature_score, 0) +
-    COALESCE(cons.adjusted_consciousness_score, 0) AS gdnews2_total,
-    -- Quality and status
-    (COALESCE(rr.confidence, 0) +
-     COALESCE(os.confidence, 0) +
-     COALESCE(bp.confidence, 0) +
-     COALESCE(hr.confidence, 0) +
-     COALESCE(temp.confidence, 0) +
-     COALESCE(cons.confidence, 0)) / 6.0 AS overall_confidence,
-    CAST(
-        CASE WHEN rr.measurement_status = 'VALID' THEN 1 ELSE 0 END +
-        CASE WHEN os.measurement_status = 'VALID' THEN 1 ELSE 0 END +
-        CASE WHEN bp.measurement_status = 'VALID' THEN 1 ELSE 0 END +
-        CASE WHEN hr.measurement_status = 'VALID' THEN 1 ELSE 0 END +
-        CASE WHEN temp.measurement_status = 'VALID' THEN 1 ELSE 0 END +
-        CASE WHEN cons.measurement_status = 'VALID' THEN 1 ELSE 0 END
-    AS INT) AS valid_parameters,
-    CAST(
-        CASE WHEN rr.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END +
-        CASE WHEN os.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END +
-        CASE WHEN bp.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END +
-        CASE WHEN hr.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END +
-        CASE WHEN temp.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END +
-        CASE WHEN cons.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END
-    AS INT) AS degraded_parameters,
-    CAST(
-        CASE WHEN rr.measurement_status = 'INVALID' THEN 1 ELSE 0 END +
-        CASE WHEN os.measurement_status = 'INVALID' THEN 1 ELSE 0 END +
-        CASE WHEN bp.measurement_status = 'INVALID' THEN 1 ELSE 0 END +
-        CASE WHEN hr.measurement_status = 'INVALID' THEN 1 ELSE 0 END +
-        CASE WHEN temp.measurement_status = 'INVALID' THEN 1 ELSE 0 END +
-        CASE WHEN cons.measurement_status = 'INVALID' THEN 1 ELSE 0 END
-    AS INT) AS invalid_parameters,
-    -- Timestamps
-    rr.kafka_timestamp AS measurement_timestamp,
-    rr.kafka_timestamp,
-    rr.enrichment_timestamp,
-    rr.routing_timestamp,
-    rr.scoring_timestamp,
-    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS aggregation_timestamp
-FROM respiratory_rate_window rr
-JOIN oxygen_saturation_window os
-    ON rr.patient_id = os.patient_id
-    AND rr.window_start = os.window_start
-    AND rr.window_end = os.window_end
-JOIN blood_pressure_window bp
-    ON rr.patient_id = bp.patient_id
-    AND rr.window_start = bp.window_start
-    AND rr.window_end = bp.window_end
-JOIN heart_rate_window hr
-    ON rr.patient_id = hr.patient_id
-    AND rr.window_start = hr.window_start
-    AND rr.window_end = hr.window_end
-JOIN temperature_window temp
-    ON rr.patient_id = temp.patient_id
-    AND rr.window_start = temp.window_start
-    AND rr.window_end = temp.window_end
-JOIN consciousness_window cons
-    ON rr.patient_id = cons.patient_id
-    AND rr.window_start = cons.window_start
-    AND rr.window_end = cons.window_end;
-
+-- #######################################
 
 CREATE TABLE gdnews2_scores (
     patient_id STRING,
+    window_start TIMESTAMP(3),
+    window_end TIMESTAMP(3),
     -- Raw measurements
     respiratory_rate_value DOUBLE,
     oxygen_saturation_value DOUBLE,
@@ -1503,285 +958,305 @@ CREATE TABLE gdnews2_scores (
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3),
     aggregation_timestamp TIMESTAMP(3),
-    WATERMARK FOR kafka_timestamp AS kafka_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR kafka_timestamp AS kafka_timestamp - INTERVAL '5' SECONDS,
+    PRIMARY KEY (patient_id, window_start, window_end) NOT ENFORCED
 ) WITH (
-    'connector' = 'kafka',
+    'connector' = 'upsert-kafka',
     'topic' = 'gdnews2_scores',
     'properties.bootstrap.servers' = 'kafka-1:19091,kafka-2:19092,kafka-3:19093',
-    'format' = 'json',
-    'json.timestamp-format.standard' = 'ISO-8601',
-    'scan.startup.mode' = 'latest-offset'
+    'key.format' = 'json',
+    'value.format' = 'json'
 );
 
--- Insert the results into the gdnews2_scores table
+
 INSERT INTO gdnews2_scores
-SELECT * FROM (
-    WITH respiratory_rate_window AS (
-    SELECT
-        patient_id,
-        measured_value AS respiratory_rate_value,
-        adjusted_score AS adjusted_respiratory_rate_score,
-        raw_news2_score AS respiratory_rate_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '1' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '1' MINUTE) AS window_end
-    FROM scores_respiratory_rate
+SELECT * 
+FROM (
+    WITH base_patients AS (
+        -- Generate windowed patient IDs from datagen source (P1 to P10)
+        SELECT 
+            CONCAT('P', LPAD(CAST(n.val AS STRING), 4, '0')) AS patient_id,
+            TUMBLE_START(t.ts, INTERVAL '1' MINUTE) AS window_start,
+            TUMBLE_END(t.ts, INTERVAL '1' MINUTE) AS window_end
+        FROM minute_ticker AS t
+        CROSS JOIN number_sequence AS n
+        GROUP BY
+            n.val,
+            TUMBLE(t.ts, INTERVAL '1' MINUTE)
+    ),
+    respiratory_rate_window AS (
+        SELECT 
+            patient_id,
+            window_start,
+            window_end,
+            AVG(measured_value) as respiratory_rate_value,
+            COUNT(*) as measurement_count,
+            MAX(kafka_timestamp) as kafka_timestamp,
+            MAX(measurement_status) as measurement_status,
+            AVG(raw_news2_score) as raw_news2_score,
+            AVG(adjusted_score) as adjusted_score,
+            AVG(confidence) as confidence,
+            MAX(measurement_timestamp) as measurement_timestamp,
+            MAX(enrichment_timestamp) as enrichment_timestamp,
+            MAX(routing_timestamp) as routing_timestamp,
+            MAX(scoring_timestamp) as scoring_timestamp
+        FROM TABLE(
+            TUMBLE(TABLE scores_respiratory_rate, DESCRIPTOR(kafka_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
+    ),
+    oxygen_saturation_window AS (
+        SELECT 
+            patient_id,
+            window_start,
+            window_end,
+            AVG(measured_value) as oxygen_saturation_value,
+            COUNT(*) as measurement_count,
+            MAX(kafka_timestamp) as kafka_timestamp,
+            MAX(measurement_status) as measurement_status,
+            AVG(raw_news2_score) as raw_news2_score,
+            AVG(adjusted_score) as adjusted_score,
+            AVG(confidence) as confidence,
+            MAX(measurement_timestamp) as measurement_timestamp,
+            MAX(enrichment_timestamp) as enrichment_timestamp,
+            MAX(routing_timestamp) as routing_timestamp,
+            MAX(scoring_timestamp) as scoring_timestamp
+        FROM TABLE(
+            TUMBLE(TABLE scores_oxygen_saturation, DESCRIPTOR(kafka_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
+    ),
+    blood_pressure_window AS (
+        SELECT 
+            patient_id,
+            window_start,
+            window_end,
+            AVG(measured_value) as blood_pressure_value,
+            COUNT(*) as measurement_count,
+            MAX(kafka_timestamp) as kafka_timestamp,
+            MAX(measurement_status) as measurement_status,
+            AVG(raw_news2_score) as raw_news2_score,
+            AVG(adjusted_score) as adjusted_score,
+            AVG(confidence) as confidence,
+            MAX(measurement_timestamp) as measurement_timestamp,
+            MAX(enrichment_timestamp) as enrichment_timestamp,
+            MAX(routing_timestamp) as routing_timestamp,
+            MAX(scoring_timestamp) as scoring_timestamp
+        FROM TABLE(
+            TUMBLE(TABLE scores_blood_pressure_systolic, DESCRIPTOR(kafka_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
+    ),
+    heart_rate_window AS (
+        SELECT 
+            patient_id,
+            window_start,
+            window_end,
+            AVG(measured_value) as heart_rate_value,
+            COUNT(*) as measurement_count,
+            MAX(kafka_timestamp) as kafka_timestamp,
+            MAX(measurement_status) as measurement_status,
+            AVG(raw_news2_score) as raw_news2_score,
+            AVG(adjusted_score) as adjusted_score,
+            AVG(confidence) as confidence,
+            MAX(measurement_timestamp) as measurement_timestamp,
+            MAX(enrichment_timestamp) as enrichment_timestamp,
+            MAX(routing_timestamp) as routing_timestamp,
+            MAX(scoring_timestamp) as scoring_timestamp
+        FROM TABLE(
+            TUMBLE(TABLE scores_heart_rate, DESCRIPTOR(kafka_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
+    ),
+    temperature_window AS (
+        SELECT 
+            patient_id,
+            window_start,
+            window_end,
+            AVG(measured_value) as temperature_value,
+            COUNT(*) as measurement_count,
+            MAX(kafka_timestamp) as kafka_timestamp,
+            MAX(measurement_status) as measurement_status,
+            AVG(raw_news2_score) as raw_news2_score,
+            AVG(adjusted_score) as adjusted_score,
+            AVG(confidence) as confidence,
+            MAX(measurement_timestamp) as measurement_timestamp,
+            MAX(enrichment_timestamp) as enrichment_timestamp,
+            MAX(routing_timestamp) as routing_timestamp,
+            MAX(scoring_timestamp) as scoring_timestamp
+        FROM TABLE(
+            TUMBLE(TABLE scores_temperature, DESCRIPTOR(kafka_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
+    ),
+    consciousness_window AS (
+        SELECT 
+            patient_id,
+            window_start,
+            window_end,
+            MAX(measured_value) as consciousness_value,
+            COUNT(*) as measurement_count,
+            MAX(kafka_timestamp) as kafka_timestamp,
+            MAX(measurement_status) as measurement_status,
+            AVG(raw_news2_score) as raw_news2_score,
+            AVG(adjusted_score) as adjusted_score,
+            AVG(confidence) as confidence,
+            MAX(measurement_timestamp) as measurement_timestamp,
+            MAX(enrichment_timestamp) as enrichment_timestamp,
+            MAX(routing_timestamp) as routing_timestamp,
+            MAX(scoring_timestamp) as scoring_timestamp
+        FROM TABLE(
+            TUMBLE(TABLE scores_consciousness, DESCRIPTOR(kafka_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
+    )
+    
+    SELECT 
+        bp.patient_id,
+        bp.window_start,
+        bp.window_end,
+        -- Raw measurements
+        MAX(rr.respiratory_rate_value) as respiratory_rate_value,
+        MAX(os.oxygen_saturation_value) as oxygen_saturation_value,
+        MAX(bp_val.blood_pressure_value) as blood_pressure_value,
+        MAX(hr.heart_rate_value) as heart_rate_value,
+        MAX(temp.temperature_value) as temperature_value,
+        MAX(cons.consciousness_value) as consciousness_value,
+        
+        -- Raw NEWS2 scores
+        MAX(rr.raw_news2_score) as respiratory_rate_score,
+        MAX(os.raw_news2_score) as oxygen_saturation_score,
+        MAX(bp_val.raw_news2_score) as blood_pressure_score,
+        MAX(hr.raw_news2_score) as heart_rate_score,
+        MAX(temp.raw_news2_score) as temperature_score,
+        MAX(cons.raw_news2_score) as consciousness_score,
+        
+        -- Calculate raw NEWS2 total
+        (COALESCE(MAX(rr.raw_news2_score), 0) + 
+        COALESCE(MAX(os.raw_news2_score), 0) + 
+        COALESCE(MAX(bp_val.raw_news2_score), 0) + 
+        COALESCE(MAX(hr.raw_news2_score), 0) + 
+        COALESCE(MAX(temp.raw_news2_score), 0) + 
+        COALESCE(MAX(cons.raw_news2_score), 0)) as raw_news2_total,
+        
+        -- Adjusted scores
+        MAX(rr.adjusted_score) as adjusted_respiratory_rate_score,
+        MAX(os.adjusted_score) as adjusted_oxygen_saturation_score,
+        MAX(bp_val.adjusted_score) as adjusted_blood_pressure_score,
+        MAX(hr.adjusted_score) as adjusted_heart_rate_score,
+        MAX(temp.adjusted_score) as adjusted_temperature_score,
+        MAX(cons.adjusted_score) as adjusted_consciousness_score,
+        
+        -- Calculate gdNEWS2 total
+        (COALESCE(MAX(rr.adjusted_score), 0) + 
+        COALESCE(MAX(os.adjusted_score), 0) + 
+        COALESCE(MAX(bp_val.adjusted_score), 0) + 
+        COALESCE(MAX(hr.adjusted_score), 0) + 
+        COALESCE(MAX(temp.adjusted_score), 0) + 
+        COALESCE(MAX(cons.adjusted_score), 0)) as gdnews2_total,
+        
+        -- Quality and confidence
+        (COALESCE(MAX(rr.confidence), 0) + 
+        COALESCE(MAX(os.confidence), 0) + 
+        COALESCE(MAX(bp_val.confidence), 0) + 
+        COALESCE(MAX(hr.confidence), 0) + 
+        COALESCE(MAX(temp.confidence), 0) + 
+        COALESCE(MAX(cons.confidence), 0)) / 6 as overall_confidence,
+        
+        -- Status counts
+        (CASE WHEN MAX(rr.measurement_status) = 'VALID' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(os.measurement_status) = 'VALID' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(bp_val.measurement_status) = 'VALID' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(hr.measurement_status) = 'VALID' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(temp.measurement_status) = 'VALID' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(cons.measurement_status) = 'VALID' THEN 1 ELSE 0 END) as valid_parameters,
+        
+        (CASE WHEN MAX(rr.measurement_status) = 'DEGRADED' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(os.measurement_status) = 'DEGRADED' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(bp_val.measurement_status) = 'DEGRADED' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(hr.measurement_status) = 'DEGRADED' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(temp.measurement_status) = 'DEGRADED' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(cons.measurement_status) = 'DEGRADED' THEN 1 ELSE 0 END) as degraded_parameters,
+        
+        (CASE WHEN MAX(rr.measurement_status) = 'INVALID' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(os.measurement_status) = 'INVALID' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(bp_val.measurement_status) = 'INVALID' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(hr.measurement_status) = 'INVALID' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(temp.measurement_status) = 'INVALID' THEN 1 ELSE 0 END +
+        CASE WHEN MAX(cons.measurement_status) = 'INVALID' THEN 1 ELSE 0 END) as invalid_parameters,
+        
+        -- Timestamps
+        MAX(COALESCE(
+            rr.measurement_timestamp,
+            os.measurement_timestamp,
+            bp_val.measurement_timestamp,
+            hr.measurement_timestamp,
+            temp.measurement_timestamp,
+            cons.measurement_timestamp
+        )) as measurement_timestamp,
+        
+        MAX(COALESCE(
+            cons.kafka_timestamp,
+            temp.kafka_timestamp,
+            hr.kafka_timestamp,
+            bp_val.kafka_timestamp,
+            os.kafka_timestamp,
+            rr.kafka_timestamp
+        )) as kafka_timestamp,
+        
+        MAX(COALESCE(
+            cons.enrichment_timestamp,
+            temp.enrichment_timestamp,
+            hr.enrichment_timestamp,
+            bp_val.enrichment_timestamp,
+            os.enrichment_timestamp,
+            rr.enrichment_timestamp
+        )) as enrichment_timestamp,
+        
+        MAX(COALESCE(
+            cons.routing_timestamp,
+            temp.routing_timestamp,
+            hr.routing_timestamp,
+            bp_val.routing_timestamp,
+            os.routing_timestamp,
+            rr.routing_timestamp
+        )) as routing_timestamp,
+        
+        MAX(COALESCE(
+            cons.scoring_timestamp,
+            temp.scoring_timestamp,
+            hr.scoring_timestamp,
+            bp_val.scoring_timestamp,
+            os.scoring_timestamp,
+            rr.scoring_timestamp
+        )) as scoring_timestamp,
+        
+        MAX(CAST(LOCALTIMESTAMP AS TIMESTAMP(3))) as aggregation_timestamp
+    FROM base_patients bp
+    LEFT JOIN respiratory_rate_window rr
+        ON bp.patient_id = rr.patient_id
+        AND bp.window_start = rr.window_start
+        AND bp.window_end = rr.window_end
+    LEFT JOIN oxygen_saturation_window os
+        ON bp.patient_id = os.patient_id
+        AND bp.window_start = os.window_start
+        AND bp.window_end = os.window_end
+    LEFT JOIN blood_pressure_window bp_val
+        ON bp.patient_id = bp_val.patient_id
+        AND bp.window_start = bp_val.window_start
+        AND bp.window_end = bp_val.window_end
+    LEFT JOIN heart_rate_window hr
+        ON bp.patient_id = hr.patient_id
+        AND bp.window_start = hr.window_start
+        AND bp.window_end = hr.window_end
+    LEFT JOIN temperature_window temp
+        ON bp.patient_id = temp.patient_id
+        AND bp.window_start = temp.window_start
+        AND bp.window_end = temp.window_end
+    LEFT JOIN consciousness_window cons
+        ON bp.patient_id = cons.patient_id
+        AND bp.window_start = cons.window_start
+        AND bp.window_end = cons.window_end
     GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '1' MINUTE)
-),
-oxygen_saturation_window AS (
-    SELECT
-        patient_id,
-        measured_value AS oxygen_saturation_value,
-        adjusted_score AS adjusted_oxygen_saturation_score,
-        raw_news2_score AS oxygen_saturation_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '1' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '1' MINUTE) AS window_end
-    FROM scores_oxygen_saturation
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '1' MINUTE)
-),
-blood_pressure_window AS (
-    SELECT
-        patient_id,
-        measured_value AS blood_pressure_value,
-        adjusted_score AS adjusted_blood_pressure_score,
-        raw_news2_score AS blood_pressure_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '1' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '1' MINUTE) AS window_end
-    FROM scores_blood_pressure_systolic
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '1' MINUTE)
-),
-heart_rate_window AS (
-    SELECT
-        patient_id,
-        measured_value AS heart_rate_value,
-        adjusted_score AS adjusted_heart_rate_score,
-        raw_news2_score AS heart_rate_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '1' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '1' MINUTE) AS window_end
-    FROM scores_heart_rate
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '1' MINUTE)
-),
-temperature_window AS (
-    SELECT
-        patient_id,
-        measured_value AS temperature_value,
-        adjusted_score AS adjusted_temperature_score,
-        raw_news2_score AS temperature_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '1' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '1' MINUTE) AS window_end
-    FROM scores_temperature
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '1' MINUTE)
-),
-consciousness_window AS (
-    SELECT
-        patient_id,
-        measured_value AS consciousness_value,
-        adjusted_score AS adjusted_consciousness_score,
-        raw_news2_score AS consciousness_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE_START(kafka_timestamp, INTERVAL '1' MINUTE) AS window_start,
-        TUMBLE_END(kafka_timestamp, INTERVAL '1' MINUTE) AS window_end
-    FROM scores_consciousness
-    GROUP BY
-        patient_id,
-        measured_value,
-        adjusted_score,
-        raw_news2_score,
-        confidence,
-        measurement_status,
-        kafka_timestamp,
-        enrichment_timestamp,
-        routing_timestamp,
-        scoring_timestamp,
-        TUMBLE(kafka_timestamp, INTERVAL '1' MINUTE)
-)
-
--- Main SELECT query to join all tables within the same window and calculate totals
-SELECT
-    rr.patient_id,
-    -- Raw measurements
-    rr.respiratory_rate_value,
-    os.oxygen_saturation_value,
-    bp.blood_pressure_value,
-    hr.heart_rate_value,
-    temp.temperature_value,
-    cons.consciousness_value,
-    -- Raw NEWS2 scores
-    rr.respiratory_rate_score,
-    os.oxygen_saturation_score,
-    bp.blood_pressure_score,
-    hr.heart_rate_score,
-    temp.temperature_score,
-    cons.consciousness_score,
-    -- Raw NEWS2 total
-    COALESCE(rr.respiratory_rate_score, 0) +
-    COALESCE(os.oxygen_saturation_score, 0) +
-    COALESCE(bp.blood_pressure_score, 0) +
-    COALESCE(hr.heart_rate_score, 0) +
-    COALESCE(temp.temperature_score, 0) +
-    COALESCE(cons.consciousness_score, 0) AS raw_news2_total,
-    -- Adjusted gdNEWS2 scores
-    rr.adjusted_respiratory_rate_score,
-    os.adjusted_oxygen_saturation_score,
-    bp.adjusted_blood_pressure_score,
-    hr.adjusted_heart_rate_score,
-    temp.adjusted_temperature_score,
-    cons.adjusted_consciousness_score,
-    -- gdNEWS2 total
-    COALESCE(rr.adjusted_respiratory_rate_score, 0) +
-    COALESCE(os.adjusted_oxygen_saturation_score, 0) +
-    COALESCE(bp.adjusted_blood_pressure_score, 0) +
-    COALESCE(hr.adjusted_heart_rate_score, 0) +
-    COALESCE(temp.adjusted_temperature_score, 0) +
-    COALESCE(cons.adjusted_consciousness_score, 0) AS gdnews2_total,
-    -- Quality and status
-    (COALESCE(rr.confidence, 0) +
-     COALESCE(os.confidence, 0) +
-     COALESCE(bp.confidence, 0) +
-     COALESCE(hr.confidence, 0) +
-     COALESCE(temp.confidence, 0) +
-     COALESCE(cons.confidence, 0)) / 6.0 AS overall_confidence,
-    CAST(
-        CASE WHEN rr.measurement_status = 'VALID' THEN 1 ELSE 0 END +
-        CASE WHEN os.measurement_status = 'VALID' THEN 1 ELSE 0 END +
-        CASE WHEN bp.measurement_status = 'VALID' THEN 1 ELSE 0 END +
-        CASE WHEN hr.measurement_status = 'VALID' THEN 1 ELSE 0 END +
-        CASE WHEN temp.measurement_status = 'VALID' THEN 1 ELSE 0 END +
-        CASE WHEN cons.measurement_status = 'VALID' THEN 1 ELSE 0 END
-    AS INT) AS valid_parameters,
-    CAST(
-        CASE WHEN rr.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END +
-        CASE WHEN os.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END +
-        CASE WHEN bp.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END +
-        CASE WHEN hr.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END +
-        CASE WHEN temp.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END +
-        CASE WHEN cons.measurement_status = 'DEGRADED' THEN 1 ELSE 0 END
-    AS INT) AS degraded_parameters,
-    CAST(
-        CASE WHEN rr.measurement_status = 'INVALID' THEN 1 ELSE 0 END +
-        CASE WHEN os.measurement_status = 'INVALID' THEN 1 ELSE 0 END +
-        CASE WHEN bp.measurement_status = 'INVALID' THEN 1 ELSE 0 END +
-        CASE WHEN hr.measurement_status = 'INVALID' THEN 1 ELSE 0 END +
-        CASE WHEN temp.measurement_status = 'INVALID' THEN 1 ELSE 0 END +
-        CASE WHEN cons.measurement_status = 'INVALID' THEN 1 ELSE 0 END
-    AS INT) AS invalid_parameters,
-    -- Timestamps
-    rr.kafka_timestamp AS measurement_timestamp,
-    rr.kafka_timestamp,
-    rr.enrichment_timestamp,
-    rr.routing_timestamp,
-    rr.scoring_timestamp,
-    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS aggregation_timestamp
-FROM respiratory_rate_window rr
-JOIN oxygen_saturation_window os
-    ON rr.patient_id = os.patient_id
-    AND rr.window_start = os.window_start
-    AND rr.window_end = os.window_end
-JOIN blood_pressure_window bp
-    ON rr.patient_id = bp.patient_id
-    AND rr.window_start = bp.window_start
-    AND rr.window_end = bp.window_end
-JOIN heart_rate_window hr
-    ON rr.patient_id = hr.patient_id
-    AND rr.window_start = hr.window_start
-    AND rr.window_end = hr.window_end
-JOIN temperature_window temp
-    ON rr.patient_id = temp.patient_id
-    AND rr.window_start = temp.window_start
-    AND rr.window_end = temp.window_end
-JOIN consciousness_window cons
-    ON rr.patient_id = cons.patient_id
-    AND rr.window_start = cons.window_start
-    AND rr.window_end = cons.window_end
-);
-
-select patient_id, gdnews2_total, overall_confidence from gdnews2_scores;
+        bp.patient_id, bp.window_start, bp.window_end
+) v;
