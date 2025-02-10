@@ -12,11 +12,15 @@ services:
         jobmanager.rpc.address: jobmanager
         jobmanager.bind-host: 0.0.0.0
         rest.bind-address: 0.0.0.0
-        jobmanager.memory.process.size: 4g
-        jobmanager.memory.heap.size: 2g
+        jobmanager.memory.process.size: 6g
+        jobmanager.memory.heap.size: 3g
         jobmanager.memory.off-heap.size: 1g
-        jobmanager.memory.jvm-metaspace.size: 512m
-        jobmanager.memory.jvm-overhead.min: 512m
+        jobmanager.memory.jvm-metaspace.size: 1g
+        jobmanager.memory.jvm-overhead.min: 1g
+        state.backend: rocksdb
+        state.backend.incremental: true
+        state.checkpoints.dir: file:///opt/flink/checkpoints
+        state.savepoints.dir: file:///opt/flink/savepoints
         sql-gateway.enabled: true
         sql-gateway.endpoint.rest.port: 8083
         sql-gateway.endpoint.rest.address: 0.0.0.0
@@ -53,8 +57,11 @@ services:
       - |
         FLINK_PROPERTIES=
         taskmanager.numberOfTaskSlots: 3
-        taskmanager.memory.process.size: 2048m
-        taskmanager.memory.managed.fraction: 0.4
+        taskmanager.memory.process.size: 7g
+        taskmanager.memory.task.heap.size: 4g
+        taskmanager.memory.managed.size: 1g
+        taskmanager.memory.network.max: 512m
+        taskmanager.memory.framework.heap.size: 256m
     depends_on:
       - jobmanager
     command: taskmanager
@@ -64,7 +71,7 @@ services:
       - ./flink/jars/flink-connector-jdbc-3.2.0-1.19.jar:/opt/flink/lib/flink-connector-jdbc-3.2.0-1.19.jar
       - ./flink/jars/postgresql-42.7.5.jar:/opt/flink/lib/postgresql-42.7.5.jar
     deploy:
-      replicas: 20
+      replicas: 5
     networks:
       - kappa
 

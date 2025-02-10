@@ -4,7 +4,7 @@ include:
 - ./storage.compose.yml         # Ports 10000-10099 | IP: 172.20.1.X
 - ./kafka.compose.yml           # Ports 10100-10199 | IP: 172.20.2.X
 - ./flink.compose.yml           # Ports 10200-10299 | IP: 172.20.3.X
-# - ./doris.compose.yml           # Ports 10300-10399 | IP: 172.20.4.X
+- ./doris.compose.yml           # Ports 10300-10399 | IP: 172.20.4.X
 # - ./monitoring.compose.yml      # Ports 10400-10499 | IP: 172.20.5.X
 # - ./visualization.compose.yml   # Ports 20500-20599 | IP: 172.20.6.X
 

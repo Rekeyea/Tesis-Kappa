@@ -1,3 +1,9 @@
+SET 'execution.checkpointing.interval' = '10s';
+SET 'execution.checkpointing.mode' = 'EXACTLY_ONCE';
+SET 'execution.checkpointing.timeout' = '900s';
+SET 'execution.checkpointing.min-pause' = '5s';
+SET 'execution.checkpointing.max-concurrent-checkpoints' = '1';
+
 -- Create ticker with proper timestamp and watermark
 CREATE TABLE minute_ticker (
     ts TIMESTAMP(3),  -- Timestamp column
@@ -16,18 +22,6 @@ CREATE TABLE number_sequence (
     'fields.val.start' = '1',        -- Start from 1
     'fields.val.end' = '10'           -- End at 5
 );
-
--- Query with tumbling window
-SELECT 
-    CONCAT('P', LPAD(CAST(n.val AS STRING), 4, '0')) AS patient_id,
-    TUMBLE_START(t.ts, INTERVAL '1' MINUTE) AS window_start,
-    TUMBLE_END(t.ts, INTERVAL '1' MINUTE) AS window_end
-FROM minute_ticker AS t
-CROSS JOIN number_sequence AS n
-GROUP BY
-    n.val,
-    TUMBLE(t.ts, INTERVAL '1' MINUTE);
-
 
 -- Raw measurements table with original timestamps and device metrics
 CREATE TABLE raw_measurements (
@@ -1259,3 +1253,58 @@ FROM (
     GROUP BY
         bp.patient_id, bp.window_start, bp.window_end
 ) v;
+
+
+CREATE TABLE doris_gdnews2_scores (
+    patient_id STRING,
+    window_start TIMESTAMP(3),
+    window_end TIMESTAMP(3),
+    -- Raw measurements
+    respiratory_rate_value DOUBLE,
+    oxygen_saturation_value DOUBLE,
+    blood_pressure_value DOUBLE,
+    heart_rate_value DOUBLE,
+    temperature_value DOUBLE,
+    consciousness_value STRING,
+    -- Raw NEWS2 scores
+    respiratory_rate_score DOUBLE,
+    oxygen_saturation_score DOUBLE,
+    blood_pressure_score DOUBLE,
+    heart_rate_score DOUBLE,
+    temperature_score DOUBLE,
+    consciousness_score DOUBLE,
+    raw_news2_total DOUBLE,
+    -- Adjusted gdNEWS2 scores
+    adjusted_respiratory_rate_score DOUBLE,
+    adjusted_oxygen_saturation_score DOUBLE,
+    adjusted_blood_pressure_score DOUBLE,
+    adjusted_heart_rate_score DOUBLE,
+    adjusted_temperature_score DOUBLE,
+    adjusted_consciousness_score DOUBLE,
+    gdnews2_total DOUBLE,
+    -- Quality and status
+    overall_confidence DOUBLE,
+    valid_parameters INT,
+    degraded_parameters INT,
+    invalid_parameters INT,
+    -- Timestamps
+    measurement_timestamp TIMESTAMP(3),
+    kafka_timestamp TIMESTAMP(3),
+    enrichment_timestamp TIMESTAMP(3),
+    routing_timestamp TIMESTAMP(3),
+    scoring_timestamp TIMESTAMP(3),
+    aggregation_timestamp TIMESTAMP(3),
+    PRIMARY KEY (patient_id, window_start, window_end) NOT ENFORCED
+) WITH (
+    'connector' = 'doris',
+    'fenodes' = '172.20.4.2:8030',
+    'table.identifier' = 'kappa.gdnews2_scores',  -- Writing to hot storage
+    'username' = 'kappa',
+    'password' = 'kappa',
+    'sink.label-prefix' = 'doris_sink_gdnews2',
+    'sink.properties.format' = 'json'
+);
+
+INSERT INTO doris_gdnews2_scores
+SELECT *
+FROM gdnews2_scores;
