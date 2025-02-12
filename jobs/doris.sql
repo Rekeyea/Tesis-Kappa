@@ -36,11 +36,13 @@ CREATE TABLE IF NOT EXISTS gdnews2_scores (
     invalid_parameters INT,
     -- Timestamps
     measurement_timestamp DATETIME,
-    kafka_timestamp DATETIME,
+    ingestion_timestamp DATETIME,
     enrichment_timestamp DATETIME,
     routing_timestamp DATETIME,
     scoring_timestamp DATETIME,
-    aggregation_timestamp DATETIME
+    aggregation_timestamp DATETIME,
+    storage_timestamp DATETIME DEFAULT "__DORIS_CREATE_TIME__",
+    updated_storage_timestamp DATETIME DEFAULT "__DORIS_CREATE_TIME__" UPDATE current_timestamp(),
 )
 UNIQUE KEY(patient_id, window_start, window_end)
 DISTRIBUTED BY HASH(patient_id) BUCKETS 4

@@ -32,7 +32,7 @@ CREATE TABLE raw_measurements (
     battery DOUBLE,
     signal_strength DOUBLE,
     ingestion_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR ingestion_timestamp AS ingestion_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'topic' = 'raw.measurements',
     'connector' = 'kafka',
@@ -46,7 +46,7 @@ CREATE TABLE raw_measurements (
 
 -- Enriched measurements with quality metrics and corrected types
 CREATE TABLE enriched_measurements (
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     measurement_type STRING,
     raw_value STRING,
     numeric_value DOUBLE,
@@ -72,7 +72,7 @@ CREATE TABLE enriched_measurements (
     ingestion_timestamp TIMESTAMP(3),
     
     enrichment_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR enrichment_timestamp AS enrichment_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'topic' = 'enriched.measurements',
     'connector' = 'kafka',
@@ -235,7 +235,8 @@ SELECT
         THEN 'DEGRADED'
         ELSE 'INVALID'
     END AS measurement_status,
-    ingestion_timestamp
+    ingestion_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS enrichment_timestamp
 FROM raw_measurements;
 
 -- #################################################################################
@@ -250,12 +251,12 @@ CREATE TABLE measurements_respiratory_rate (
     quality_weight DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR routing_timestamp AS routing_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.respiratory_rate',
@@ -274,11 +275,11 @@ CREATE TABLE measurements_oxygen_saturation (
     quality_weight DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR routing_timestamp AS routing_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.oxygen_saturation',
@@ -297,11 +298,11 @@ CREATE TABLE measurements_blood_pressure_systolic (
     quality_weight DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR routing_timestamp AS routing_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.blood_pressure_systolic',
@@ -320,11 +321,11 @@ CREATE TABLE measurements_heart_rate (
     quality_weight DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR routing_timestamp AS routing_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.heart_rate',
@@ -343,11 +344,11 @@ CREATE TABLE measurements_temperature (
     quality_weight DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR routing_timestamp AS routing_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.temperature',
@@ -366,11 +367,11 @@ CREATE TABLE measurements_consciousness (
     quality_weight DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR routing_timestamp AS routing_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.consciousness',
@@ -393,7 +394,8 @@ SELECT
     measurement_status,
     measurement_timestamp,
     ingestion_timestamp,
-    enrichment_timestamp
+    enrichment_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS routing_timestamp
 FROM enriched_measurements
 WHERE measurement_type = 'RESPIRATORY_RATE';
 
@@ -410,7 +412,8 @@ SELECT
     measurement_status,
     measurement_timestamp,
     ingestion_timestamp,
-    enrichment_timestamp
+    enrichment_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS routing_timestamp
 FROM enriched_measurements
 WHERE measurement_type = 'OXYGEN_SATURATION';
 
@@ -427,7 +430,8 @@ SELECT
     measurement_status,
     measurement_timestamp,
     ingestion_timestamp,
-    enrichment_timestamp
+    enrichment_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS routing_timestamp
 FROM enriched_measurements
 WHERE measurement_type = 'BLOOD_PRESSURE_SYSTOLIC';
 
@@ -444,7 +448,8 @@ SELECT
     measurement_status,
     measurement_timestamp,
     ingestion_timestamp,
-    enrichment_timestamp
+    enrichment_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS routing_timestamp
 FROM enriched_measurements
 WHERE measurement_type = 'HEART_RATE';
 
@@ -461,7 +466,8 @@ SELECT
     measurement_status,
     measurement_timestamp,
     ingestion_timestamp,
-    enrichment_timestamp
+    enrichment_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS routing_timestamp
 FROM enriched_measurements
 WHERE measurement_type = 'TEMPERATURE';
 
@@ -478,7 +484,8 @@ SELECT
     measurement_status,
     measurement_timestamp,
     ingestion_timestamp,
-    enrichment_timestamp
+    enrichment_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS routing_timestamp
 FROM enriched_measurements
 WHERE measurement_type = 'CONSCIOUSNESS';
 
@@ -498,12 +505,12 @@ CREATE TABLE scores_respiratory_rate (
     confidence DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR scoring_timestamp AS scoring_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.respiratory_rate',
@@ -527,12 +534,12 @@ CREATE TABLE scores_oxygen_saturation (
     confidence DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR scoring_timestamp AS scoring_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.oxygen_saturation',
@@ -556,12 +563,12 @@ CREATE TABLE scores_blood_pressure_systolic (
     confidence DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR scoring_timestamp AS scoring_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.blood_pressure_systolic',
@@ -585,12 +592,12 @@ CREATE TABLE scores_heart_rate (
     confidence DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR scoring_timestamp AS scoring_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.heart_rate',
@@ -614,12 +621,12 @@ CREATE TABLE scores_temperature (
     confidence DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR scoring_timestamp AS scoring_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.temperature',
@@ -640,12 +647,12 @@ CREATE TABLE scores_consciousness (
     confidence DOUBLE,
     freshness_weight DECIMAL(7,2),
     measurement_status STRING,
-    measurement_timestamp TIMESTAMP(3),
+    measurement_timestamp TIMESTAMP(9),
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR scoring_timestamp AS scoring_timestamp - INTERVAL '5' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.consciousness',
@@ -689,11 +696,12 @@ SELECT
     measurement_timestamp,
     ingestion_timestamp,
     enrichment_timestamp,
-    routing_timestamp
+    routing_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS scoring_timestamp
 FROM measurements_respiratory_rate
 WINDOW w AS (
     PARTITION BY patient_id
-    ORDER BY measurement_timestamp
+    ORDER BY ingestion_timestamp           -- Changed from measurement_timestamp to ingestion_timestamp
     ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 );
 
@@ -729,11 +737,12 @@ SELECT
     measurement_timestamp,
     ingestion_timestamp,
     enrichment_timestamp,
-    routing_timestamp
+    routing_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS scoring_timestamp
 FROM measurements_oxygen_saturation
 WINDOW w AS (
     PARTITION BY patient_id 
-    ORDER BY measurement_timestamp
+    ORDER BY ingestion_timestamp
     ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 );
 
@@ -771,11 +780,12 @@ SELECT
     measurement_timestamp,
     ingestion_timestamp,
     enrichment_timestamp,
-    routing_timestamp
+    routing_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS scoring_timestamp
 FROM measurements_blood_pressure_systolic
 WINDOW w AS (
     PARTITION BY patient_id 
-    ORDER BY measurement_timestamp
+    ORDER BY ingestion_timestamp
     ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 );
 
@@ -815,11 +825,12 @@ SELECT
     measurement_timestamp,
     ingestion_timestamp,
     enrichment_timestamp,
-    routing_timestamp
+    routing_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS scoring_timestamp
 FROM measurements_heart_rate
 WINDOW w AS (
     PARTITION BY patient_id 
-    ORDER BY measurement_timestamp
+    ORDER BY ingestion_timestamp
     ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 );
 
@@ -857,11 +868,12 @@ SELECT
     measurement_timestamp,
     ingestion_timestamp,
     enrichment_timestamp,
-    routing_timestamp
+    routing_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS scoring_timestamp
 FROM measurements_temperature
 WINDOW w AS (
     PARTITION BY patient_id 
-    ORDER BY measurement_timestamp
+    ORDER BY ingestion_timestamp
     ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 );
 
@@ -890,11 +902,12 @@ SELECT
     measurement_timestamp,
     ingestion_timestamp,
     enrichment_timestamp,
-    routing_timestamp
+    routing_timestamp,
+    CAST(LOCALTIMESTAMP AS TIMESTAMP(3)) AS scoring_timestamp
 FROM measurements_consciousness
 WINDOW w AS (
     PARTITION BY patient_id 
-    ORDER BY measurement_timestamp
+    ORDER BY ingestion_timestamp
     ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
 );
 
@@ -941,7 +954,7 @@ CREATE TABLE gdnews2_scores (
     scoring_timestamp TIMESTAMP(3),
 
     aggregation_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR aggregation_timestamp AS aggregation_timestamp - INTERVAL '5' SECONDS,
+    WATERMARK FOR aggregation_timestamp AS aggregation_timestamp - INTERVAL '5' SECONDS
 
     PRIMARY KEY (patient_id, window_start, window_end) NOT ENFORCED
 ) WITH (
@@ -956,11 +969,23 @@ CREATE TABLE gdnews2_scores (
 INSERT INTO gdnews2_scores
 SELECT * 
 FROM (
-    WITH respiratory_rate_window AS (
+    WITH base_patients AS (
+        -- Generate windowed patient IDs from datagen source (P1 to P10)
+        SELECT 
+            CONCAT('P', LPAD(CAST(n.val AS STRING), 4, '0')) AS patient_id,
+            TUMBLE_START(t.ts, INTERVAL '1' MINUTE) AS window_start,
+            TUMBLE_END(t.ts, INTERVAL '1' MINUTE) AS window_end
+        FROM minute_ticker AS t
+        CROSS JOIN number_sequence AS n
+        GROUP BY
+            n.val,
+            TUMBLE(t.ts, INTERVAL '1' MINUTE)
+    ),
+    respiratory_rate_window AS (
         SELECT 
             patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
+            window_start,
+            window_end,
             AVG(measured_value) as respiratory_rate_value,
             COUNT(*) as measurement_count,
             MIN(ingestion_timestamp) as ingestion_timestamp,
@@ -972,14 +997,16 @@ FROM (
             MIN(enrichment_timestamp) as enrichment_timestamp,
             MIN(routing_timestamp) as routing_timestamp,
             MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_respiratory_rate
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
+        FROM TABLE(
+            TUMBLE(TABLE scores_respiratory_rate, DESCRIPTOR(measurement_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
     ),
     oxygen_saturation_window AS (
         SELECT 
             patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
+            window_start,
+            window_end,
             AVG(measured_value) as oxygen_saturation_value,
             COUNT(*) as measurement_count,
             MIN(ingestion_timestamp) as ingestion_timestamp,
@@ -991,14 +1018,16 @@ FROM (
             MIN(enrichment_timestamp) as enrichment_timestamp,
             MIN(routing_timestamp) as routing_timestamp,
             MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_oxygen_saturation
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
+        FROM TABLE(
+            TUMBLE(TABLE scores_oxygen_saturation, DESCRIPTOR(measurement_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
     ),
     blood_pressure_window AS (
         SELECT 
             patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
+            window_start,
+            window_end,
             AVG(measured_value) as blood_pressure_value,
             COUNT(*) as measurement_count,
             MIN(ingestion_timestamp) as ingestion_timestamp,
@@ -1010,14 +1039,16 @@ FROM (
             MIN(enrichment_timestamp) as enrichment_timestamp,
             MIN(routing_timestamp) as routing_timestamp,
             MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_blood_pressure_systolic
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
+        FROM TABLE(
+            TUMBLE(TABLE scores_blood_pressure_systolic, DESCRIPTOR(measurement_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
     ),
     heart_rate_window AS (
         SELECT 
             patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
+            window_start,
+            window_end,
             AVG(measured_value) as heart_rate_value,
             COUNT(*) as measurement_count,
             MIN(ingestion_timestamp) as ingestion_timestamp,
@@ -1029,14 +1060,16 @@ FROM (
             MIN(enrichment_timestamp) as enrichment_timestamp,
             MIN(routing_timestamp) as routing_timestamp,
             MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_heart_rate
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
+        FROM TABLE(
+            TUMBLE(TABLE scores_heart_rate, DESCRIPTOR(measurement_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
     ),
     temperature_window AS (
         SELECT 
             patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
+            window_start,
+            window_end,
             AVG(measured_value) as temperature_value,
             COUNT(*) as measurement_count,
             MIN(ingestion_timestamp) as ingestion_timestamp,
@@ -1048,14 +1081,16 @@ FROM (
             MIN(enrichment_timestamp) as enrichment_timestamp,
             MIN(routing_timestamp) as routing_timestamp,
             MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_temperature
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
+        FROM TABLE(
+            TUMBLE(TABLE scores_temperature, DESCRIPTOR(measurement_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
     ),
     consciousness_window AS (
         SELECT 
             patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
+            window_start,
+            window_end,
             MIN(measured_value) as consciousness_value,
             COUNT(*) as measurement_count,
             MIN(ingestion_timestamp) as ingestion_timestamp,
@@ -1067,14 +1102,16 @@ FROM (
             MIN(enrichment_timestamp) as enrichment_timestamp,
             MIN(routing_timestamp) as routing_timestamp,
             MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_consciousness
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
+        FROM TABLE(
+            TUMBLE(TABLE scores_consciousness, DESCRIPTOR(measurement_timestamp), INTERVAL '1' MINUTE)
+        )
+        GROUP BY patient_id, window_start, window_end
     )
     
     SELECT 
-        COALESCE(rr.patient_id, os.patient_id, bp_val.patient_id, hr.patient_id, temp.patient_id, cons.patient_id) AS patient_id,
-        COALESCE(rr.window_start, os.window_start, bp_val.window_start, hr.window_start, temp.window_start, cons.window_start) AS window_start,
-        COALESCE(rr.window_end, os.window_end, bp_val.window_end, hr.window_end, temp.window_end, cons.window_end) AS window_end,
+        bp.patient_id,
+        bp.window_start,
+        bp.window_end,
         -- Raw measurements
         MAX(rr.respiratory_rate_value) as respiratory_rate_value,
         MAX(os.oxygen_saturation_value) as oxygen_saturation_value,
@@ -1189,33 +1226,36 @@ FROM (
             bp_val.scoring_timestamp,
             os.scoring_timestamp,
             rr.scoring_timestamp
-        )) as scoring_timestamp
-
-    FROM respiratory_rate_window rr
-    FULL JOIN oxygen_saturation_window os
-        ON rr.patient_id = os.patient_id
-        AND rr.window_start = os.window_start
-        AND rr.window_end = os.window_end
-    FULL JOIN blood_pressure_window bp_val
-        ON rr.patient_id = bp_val.patient_id
-        AND rr.window_start = bp_val.window_start
-        AND rr.window_end = bp_val.window_end
-    FULL JOIN heart_rate_window hr
-        ON rr.patient_id = hr.patient_id
-        AND rr.window_start = hr.window_start
-        AND rr.window_end = hr.window_end
-    FULL JOIN temperature_window temp
-        ON rr.patient_id = temp.patient_id
-        AND rr.window_start = temp.window_start
-        AND rr.window_end = temp.window_end
-    FULL JOIN consciousness_window cons
-        ON rr.patient_id = cons.patient_id
-        AND rr.window_start = cons.window_start
-        AND rr.window_end = cons.window_end
+        )) as scoring_timestamp,
+        
+        MAX(CAST(LOCALTIMESTAMP AS TIMESTAMP(3))) as aggregation_timestamp
+    FROM base_patients bp
+    LEFT JOIN respiratory_rate_window rr
+        ON bp.patient_id = rr.patient_id
+        AND bp.window_start = rr.window_start
+        AND bp.window_end = rr.window_end
+    LEFT JOIN oxygen_saturation_window os
+        ON bp.patient_id = os.patient_id
+        AND bp.window_start = os.window_start
+        AND bp.window_end = os.window_end
+    LEFT JOIN blood_pressure_window bp_val
+        ON bp.patient_id = bp_val.patient_id
+        AND bp.window_start = bp_val.window_start
+        AND bp.window_end = bp_val.window_end
+    LEFT JOIN heart_rate_window hr
+        ON bp.patient_id = hr.patient_id
+        AND bp.window_start = hr.window_start
+        AND bp.window_end = hr.window_end
+    LEFT JOIN temperature_window temp
+        ON bp.patient_id = temp.patient_id
+        AND bp.window_start = temp.window_start
+        AND bp.window_end = temp.window_end
+    LEFT JOIN consciousness_window cons
+        ON bp.patient_id = cons.patient_id
+        AND bp.window_start = cons.window_start
+        AND bp.window_end = cons.window_end
     GROUP BY
-        COALESCE(rr.patient_id, os.patient_id, bp_val.patient_id, hr.patient_id, temp.patient_id, cons.patient_id),
-        COALESCE(rr.window_start, os.window_start, bp_val.window_start, hr.window_start, temp.window_start, cons.window_start),
-        COALESCE(rr.window_end, os.window_end, bp_val.window_end, hr.window_end, temp.window_end, cons.window_end)
+        bp.patient_id, bp.window_start, bp.window_end
 ) v;
 
 
