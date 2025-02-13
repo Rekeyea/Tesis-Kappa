@@ -4,7 +4,9 @@ from dash.dependencies import Input, Output, State
 import pymysql
 from datetime import datetime, timedelta
 import pandas as pd
+from plotly.subplots import make_subplots  # For combining multiple subplots
 
+# Database access class
 class VitalsDB:
     def __init__(self):
         self.conn = pymysql.connect(
@@ -16,7 +18,7 @@ class VitalsDB:
             cursorclass=pymysql.cursors.DictCursor
         )
         
-    def get_latest_vitals(self, patient_id, minutes=5):
+    def get_vitals_by_date_range(self, patient_id, start_date, end_date):
         with self.conn.cursor() as cursor:
             query = """
             SELECT 
@@ -27,15 +29,17 @@ class VitalsDB:
                 COALESCE(heart_rate_value, 0) as heart_rate_value,
                 COALESCE(temperature_value, 0) as temperature_value,
                 COALESCE(consciousness_value, 'N/A') as consciousness_value,
-                COALESCE(gdnews2_total, 0) as gdnews2_total
+                COALESCE(gdnews2_total, 0) as gdnews2_total,
+                COALESCE(overall_confidence, 0) as overall_confidence,
+                COALESCE(valid_parameters, 0) as valid_parameters,
+                COALESCE(degraded_parameters, 0) as degraded_parameters,
+                COALESCE(invalid_parameters, 0) as invalid_parameters
             FROM gdnews2_scores 
             WHERE patient_id = %s 
-            AND window_start >= %s
+            AND window_start BETWEEN %s AND %s
             ORDER BY window_start DESC
             """
-            
-            time_threshold = datetime.now() - timedelta(minutes=minutes)
-            cursor.execute(query, (patient_id, time_threshold))
+            cursor.execute(query, (patient_id, start_date, end_date))
             results = cursor.fetchall()
             return pd.DataFrame(results)
 
@@ -51,10 +55,6 @@ def format_value(value, format_str, unit):
         return f"{value:{format_str}} {unit}"
     except (ValueError, TypeError):
         return "N/A"
-
-app = Dash(__name__)
-
-# Layout with time controls
 
 # Colors and styles
 COLORS = {
@@ -77,6 +77,8 @@ CARD_STYLE = {
     'marginBottom': '20px'
 }
 
+app = Dash(__name__, suppress_callback_exceptions=True)
+
 app.layout = html.Div([
     # Header
     html.H1('Patient Vitals Monitor', style={
@@ -91,6 +93,7 @@ app.layout = html.Div([
     
     # Controls section
     html.Div([
+        # Patient Selector
         html.Div([
             html.Label('Patient ID', style={
                 'fontWeight': 'bold',
@@ -105,31 +108,32 @@ app.layout = html.Div([
             )
         ], style={'width': '30%', 'display': 'inline-block', 'marginRight': '20px'}),
         
+        # Date Range Picker
         html.Div([
-            html.Label('Time Range', style={
+            html.Label('Date Range', style={
                 'fontWeight': 'bold',
                 'color': COLORS['text'],
                 'marginBottom': '8px'
             }),
-            dcc.RadioItems(
-                id='time-range',
-                options=[
-                    {'label': '5 min', 'value': 5},
-                    {'label': '15 min', 'value': 15},
-                    {'label': '30 min', 'value': 30},
-                    {'label': '1 hour', 'value': 60},
-                    {'label': '2 hours', 'value': 120}
-                ],
-                value=5,
-                inline=True,
-                style={
-                    'backgroundColor': COLORS['secondary'],
-                    'padding': '10px',
-                    'borderRadius': '5px'
-                }
-            )
+            html.Div([
+                dcc.DatePickerRange(
+                    id='date-range',
+                    min_date_allowed=datetime(2020, 1, 1),
+                    max_date_allowed=datetime.now(),
+                    initial_visible_month=datetime.now(),
+                    start_date=datetime.now() - timedelta(days=7),
+                    end_date=datetime.now(),
+                    display_format='YYYY-MM-DD',
+                    style={'zIndex': 9999}
+                ),
+            ], style={
+                'backgroundColor': COLORS['secondary'],
+                'padding': '10px',
+                'borderRadius': '5px'
+            })
         ], style={'width': '40%', 'display': 'inline-block'}),
         
+        # Update Interval
         html.Div([
             html.Label('Update Interval', style={
                 'fontWeight': 'bold',
@@ -160,23 +164,21 @@ app.layout = html.Div([
             'marginBottom': '20px',
             'fontFamily': 'Helvetica Neue, Arial, sans-serif'
         }),
-        html.Div(id='current-values', style={
-            'display': 'grid',
-            'gridTemplateColumns': 'repeat(auto-fit, minmax(200px, 1fr))',
-            'gap': '20px',
-            'padding': '10px'
-        })
+        # This container will be updated with both the prominent gdNEWS2 score and a grid of all vitals
+        html.Div(id='current-values')
     ], style=CARD_STYLE),
     
     # Charts Container
     html.Div([
-        dcc.Graph(id='vitals-graph', style={'marginBottom': '20px'}),
+        dcc.Graph(id='heart-rate-graph', style={'marginBottom': '20px'}),
+        dcc.Graph(id='oxygen-saturation-graph', style={'marginBottom': '20px'}),
+        dcc.Graph(id='respiratory-rate-graph', style={'marginBottom': '20px'}),
+        dcc.Graph(id='blood-pressure-graph', style={'marginBottom': '20px'}),
         dcc.Graph(id='gdnews2-graph')
     ], style=CARD_STYLE),
     
     dcc.Interval(id='interval-component', interval=5000),
     html.Div(id='last-update-time', style={'display': 'none'})
-    
 ], style={
     'padding': '20px',
     'backgroundColor': COLORS['background'],
@@ -192,49 +194,58 @@ app.layout = html.Div([
 def update_interval(value):
     return value
 
+# Main callback for updating graphs and values
 @app.callback(
-    [Output('vitals-graph', 'figure'),
+    [Output('heart-rate-graph', 'figure'),
+     Output('oxygen-saturation-graph', 'figure'),
+     Output('respiratory-rate-graph', 'figure'),
+     Output('blood-pressure-graph', 'figure'),
      Output('gdnews2-graph', 'figure'),
      Output('current-values', 'children')],
     [Input('interval-component', 'n_intervals'),
      Input('patient-selector', 'value'),
-     Input('time-range', 'value')]
+     Input('date-range', 'start_date'),
+     Input('date-range', 'end_date')]
 )
-def update_graphs(n, patient_id, time_range):
-    if not patient_id:
-        return {}, {}, html.Div("No patient selected")
+def update_graphs(n, patient_id, start_date, end_date):
+    if not patient_id or not start_date or not end_date:
+        empty_fig = {
+            'data': [],
+            'layout': go.Layout(
+                title='No data available',
+                height=400
+            )
+        }
+        return empty_fig, empty_fig, empty_fig, empty_fig, empty_fig, html.Div("Please select patient and date range")
     
     try:
+        # Convert string dates to datetime objects
+        start_date = datetime.strptime(start_date.split('T')[0], '%Y-%m-%d')
+        end_date = datetime.strptime(end_date.split('T')[0], '%Y-%m-%d') + timedelta(days=1)
+        
         db = VitalsDB()
-        df = db.get_latest_vitals(patient_id, minutes=time_range)
+        df = db.get_vitals_by_date_range(patient_id, start_date, end_date)
         
         if df.empty:
-            return {}, {}, html.Div("No data available")
+            empty_fig = {
+                'data': [],
+                'layout': go.Layout(
+                    title='No data available for selected date range',
+                    height=400
+                )
+            }
+            return empty_fig, empty_fig, empty_fig, empty_fig, empty_fig, html.Div("No data available for selected date range")
         
-        # Vitals figure
-        vitals_fig = {
+        # Heart Rate figure
+        heart_rate_fig = {
             'data': [
                 go.Scatter(x=df['window_start'], y=df['heart_rate_value'], 
-                        name='Heart Rate', line=dict(color=COLORS['accent'], width=2)),
-                go.Scatter(x=df['window_start'], y=df['oxygen_saturation_value'], 
-                        name='SpO2', line=dict(color=COLORS['primary'], width=2)),
-                go.Scatter(x=df['window_start'], y=df['respiratory_rate_value'], 
-                        name='Resp Rate', line=dict(color=COLORS['success'], width=2)),
-                go.Scatter(x=df['window_start'], y=df['blood_pressure_value'], 
-                        name='Blood Pressure', line=dict(color=COLORS['warning'], width=2))
+                        name='Heart Rate', line=dict(color=COLORS['accent'], width=2))
             ],
             'layout': go.Layout(
-                title=f'Real-time Vitals (Last {time_range} minutes)',
-                xaxis=dict(
-                    title='Time',
-                    gridcolor=COLORS['secondary'],
-                    showgrid=True
-                ),
-                yaxis=dict(
-                    title='Value',
-                    gridcolor=COLORS['secondary'],
-                    showgrid=True
-                ),
+                title='Heart Rate',
+                xaxis=dict(title='Time', gridcolor=COLORS['secondary'], showgrid=True),
+                yaxis=dict(title='Value (bpm)', gridcolor=COLORS['secondary'], showgrid=True),
                 height=400,
                 margin=dict(l=50, r=20, t=40, b=50),
                 paper_bgcolor=COLORS['card'],
@@ -243,117 +254,184 @@ def update_graphs(n, patient_id, time_range):
             )
         }
         
-        # gdNEWS2 figure
-        gdnews2_fig = {
+        # Oxygen Saturation figure
+        oxygen_saturation_fig = {
             'data': [
-                go.Scatter(x=df['window_start'], y=df['gdnews2_total'],
-                          name='gdNEWS2', line=dict(color='#ff4444', width=2))
+                go.Scatter(x=df['window_start'], y=df['oxygen_saturation_value'], 
+                        name='SpO2', line=dict(color=COLORS['primary'], width=2))
             ],
             'layout': go.Layout(
-                title='gdNEWS2 Score',
-                xaxis=dict(title='Time'),
-                yaxis=dict(title='Score', range=[0, 20]),
-                height=200,
+                title='Oxygen Saturation',
+                xaxis=dict(title='Time', gridcolor=COLORS['secondary'], showgrid=True),
+                yaxis=dict(title='Value (%)', gridcolor=COLORS['secondary'], showgrid=True),
+                height=400,
                 margin=dict(l=50, r=20, t=40, b=50),
-                paper_bgcolor='white',
-                plot_bgcolor='rgba(0,0,0,0)'
+                paper_bgcolor=COLORS['card'],
+                plot_bgcolor=COLORS['card'],
+                font=dict(color=COLORS['text'])
             )
         }
-
-        def get_value_color(value, metric):
-            # Add your thresholds for different metrics
-            return COLORS['text']  # Default color
         
+        # Respiratory Rate figure
+        respiratory_rate_fig = {
+            'data': [
+                go.Scatter(x=df['window_start'], y=df['respiratory_rate_value'], 
+                        name='Respiratory Rate', line=dict(color=COLORS['success'], width=2))
+            ],
+            'layout': go.Layout(
+                title='Respiratory Rate',
+                xaxis=dict(title='Time', gridcolor=COLORS['secondary'], showgrid=True),
+                yaxis=dict(title='Value (breaths/min)', gridcolor=COLORS['secondary'], showgrid=True),
+                height=400,
+                margin=dict(l=50, r=20, t=40, b=50),
+                paper_bgcolor=COLORS['card'],
+                plot_bgcolor=COLORS['card'],
+                font=dict(color=COLORS['text'])
+            )
+        }
+        
+        # Blood Pressure figure
+        blood_pressure_fig = {
+            'data': [
+                go.Scatter(x=df['window_start'], y=df['blood_pressure_value'], 
+                        name='Blood Pressure', line=dict(color=COLORS['warning'], width=2))
+            ],
+            'layout': go.Layout(
+                title='Blood Pressure',
+                xaxis=dict(title='Time', gridcolor=COLORS['secondary'], showgrid=True),
+                yaxis=dict(title='Value (mmHg)', gridcolor=COLORS['secondary'], showgrid=True),
+                height=400,
+                margin=dict(l=50, r=20, t=40, b=50),
+                paper_bgcolor=COLORS['card'],
+                plot_bgcolor=COLORS['card'],
+                font=dict(color=COLORS['text'])
+            )
+        }
+        
+        # gdNEWS2 figure with quality metrics in a two-row subplot
+        gdnews2_fig_obj = make_subplots(
+            rows=2, cols=1,
+            shared_xaxes=True,
+            row_heights=[0.6, 0.4],
+            vertical_spacing=0.1,
+            subplot_titles=["gdNEWS2 Score", "Quality Metrics"]
+        )
+        gdnews2_fig_obj.add_trace(
+            go.Scatter(x=df['window_start'], y=df['gdnews2_total'],
+                       name='gdNEWS2 Score', line=dict(color=COLORS['accent'], width=2)),
+            row=1, col=1
+        )
+        gdnews2_fig_obj.add_trace(
+            go.Scatter(x=df['window_start'], y=df['overall_confidence'],
+                       name='Overall Confidence', line=dict(color=COLORS['primary'], width=2)),
+            row=2, col=1
+        )
+        gdnews2_fig_obj.add_trace(
+            go.Scatter(x=df['window_start'], y=df['valid_parameters'],
+                       name='Valid Parameters', line=dict(color=COLORS['success'], width=2)),
+            row=2, col=1
+        )
+        gdnews2_fig_obj.add_trace(
+            go.Scatter(x=df['window_start'], y=df['degraded_parameters'],
+                       name='Degraded Parameters', line=dict(color=COLORS['warning'], width=2)),
+            row=2, col=1
+        )
+        gdnews2_fig_obj.add_trace(
+            go.Scatter(x=df['window_start'], y=df['invalid_parameters'],
+                       name='Invalid Parameters', line=dict(color=COLORS['danger'], width=2)),
+            row=2, col=1
+        )
+        gdnews2_fig_obj.update_layout(
+            height=400,
+            margin=dict(l=50, r=20, t=40, b=50),
+            paper_bgcolor=COLORS['card'],
+            plot_bgcolor=COLORS['card'],
+            font=dict(color=COLORS['text'])
+        )
+        gdnews2_fig = gdnews2_fig_obj.to_dict()
+        
+        # Update Current Values card to show a prominent gdNEWS2 score and all vital signs in a grid
         latest = df.iloc[0]
         current_values = html.Div([
-            # Main container with flex display
+            # Prominent gdNEWS2 score
             html.Div([
-                # Left side - Big Score
-                html.Div([
-                    html.Div('gdNEWS2 Score', style={
-                        'fontSize': '1.2em',
-                        'color': COLORS['text'],
-                        'marginBottom': '10px',
-                        'fontWeight': 'bold'
-                    }),
-                    html.Div(
-                        format_value(latest['gdnews2_total'], '.1f', ''),
-                        style={
-                            'fontSize': '3.5em',
-                            'fontWeight': 'bold',
-                            'color': COLORS['accent'],
-                            'textAlign': 'center',
-                            'padding': '20px',
-                            'backgroundColor': COLORS['secondary'],
-                            'borderRadius': '10px',
-                            'marginBottom': '10px'
-                        }
-                    )
-                ], style={
-                    'flex': '0 0 200px',
-                    'marginRight': '30px',
-                    'borderRight': f'2px solid {COLORS["secondary"]}',
-                    'paddingRight': '30px'
+                html.Div('gdNEWS2 Score', style={
+                    'fontSize': '1.2em',
+                    'color': COLORS['text'],
+                    'marginBottom': '10px',
+                    'fontWeight': 'bold'
                 }),
-                
-                # Right side - Component Values
+                html.Div(
+                    format_value(latest['gdnews2_total'], '.1f', ''),
+                    style={
+                        'fontSize': '3.5em',
+                        'fontWeight': 'bold',
+                        'color': COLORS['accent'],
+                        'textAlign': 'center',
+                        'padding': '20px',
+                        'backgroundColor': COLORS['secondary'],
+                        'borderRadius': '10px'
+                    }
+                )
+            ], style={'textAlign': 'center'}),
+            
+            # Grid for all vitals
+            html.Div([
                 html.Div([
-                    # Grid for vital signs
-                    html.Div([
-                        # Row 1
-                        html.Div([
-                            html.Div([
-                                html.Div('Heart Rate', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
-                                html.Div(format_value(latest['heart_rate_value'], '.1f', 'bpm'), 
-                                    style={'fontSize': '1.2em', 'fontWeight': 'bold'})
-                            ], style={'flex': '1'}),
-                            html.Div([
-                                html.Div('SpO2', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
-                                html.Div(format_value(latest['oxygen_saturation_value'], '.1f', '%'),
-                                    style={'fontSize': '1.2em', 'fontWeight': 'bold'})
-                            ], style={'flex': '1'}),
-                            html.Div([
-                                html.Div('Respiratory Rate', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
-                                html.Div(format_value(latest['respiratory_rate_value'], '.1f', '/min'),
-                                    style={'fontSize': '1.2em', 'fontWeight': 'bold'})
-                            ], style={'flex': '1'})
-                        ], style={'display': 'flex', 'gap': '20px', 'marginBottom': '20px'}),
-                        
-                        # Row 2
-                        html.Div([
-                            html.Div([
-                                html.Div('Blood Pressure', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
-                                html.Div(format_value(latest['blood_pressure_value'], '.1f', 'mmHg'),
-                                    style={'fontSize': '1.2em', 'fontWeight': 'bold'})
-                            ], style={'flex': '1'}),
-                            html.Div([
-                                html.Div('Temperature', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
-                                html.Div(format_value(latest['temperature_value'], '.1f', '°C'),
-                                    style={'fontSize': '1.2em', 'fontWeight': 'bold'})
-                            ], style={'flex': '1'}),
-                            html.Div([
-                                html.Div('Consciousness', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
-                                html.Div(latest['consciousness_value'] if latest['consciousness_value'] != 'N/A' else 'N/A',
-                                    style={'fontSize': '1.2em', 'fontWeight': 'bold'})
-                            ], style={'flex': '1'})
-                        ], style={'display': 'flex', 'gap': '20px'})
-                    ])
-                ], style={'flex': '1'})
+                    html.Div('Heart Rate', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
+                    html.Div(format_value(latest['heart_rate_value'], '.1f', 'bpm'), 
+                             style={'fontSize': '1.2em', 'fontWeight': 'bold'})
+                ], style={'padding': '10px', 'backgroundColor': COLORS['card'], 'borderRadius': '5px'}),
+                
+                html.Div([
+                    html.Div('Respiratory Rate', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
+                    html.Div(format_value(latest['respiratory_rate_value'], '.1f', 'breaths/min'), 
+                             style={'fontSize': '1.2em', 'fontWeight': 'bold'})
+                ], style={'padding': '10px', 'backgroundColor': COLORS['card'], 'borderRadius': '5px'}),
+                
+                html.Div([
+                    html.Div('Oxygen Saturation', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
+                    html.Div(format_value(latest['oxygen_saturation_value'], '.1f', '%'), 
+                             style={'fontSize': '1.2em', 'fontWeight': 'bold'})
+                ], style={'padding': '10px', 'backgroundColor': COLORS['card'], 'borderRadius': '5px'}),
+                
+                html.Div([
+                    html.Div('Temperature', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
+                    html.Div(format_value(latest['temperature_value'], '.1f', '°C'), 
+                             style={'fontSize': '1.2em', 'fontWeight': 'bold'})
+                ], style={'padding': '10px', 'backgroundColor': COLORS['card'], 'borderRadius': '5px'}),
+                
+                html.Div([
+                    html.Div('Blood Pressure', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
+                    html.Div(format_value(latest['blood_pressure_value'], '.1f', 'mmHg'), 
+                             style={'fontSize': '1.2em', 'fontWeight': 'bold'})
+                ], style={'padding': '10px', 'backgroundColor': COLORS['card'], 'borderRadius': '5px'}),
+                
+                html.Div([
+                    html.Div('Consciousness', style={'color': COLORS['text'], 'fontSize': '0.9em'}),
+                    html.Div(latest['consciousness_value'] if latest['consciousness_value'] != 'N/A' else 'N/A',
+                             style={'fontSize': '1.2em', 'fontWeight': 'bold'})
+                ], style={'padding': '10px', 'backgroundColor': COLORS['card'], 'borderRadius': '5px'})
             ], style={
-                'display': 'flex',
-                'alignItems': 'center',
-                'backgroundColor': COLORS['card'],
-                'padding': '20px',
-                'borderRadius': '10px',
-                'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'
+                'display': 'grid',
+                'gridTemplateColumns': 'repeat(auto-fit, minmax(200px, 1fr))',
+                'gap': '20px',
+                'marginTop': '20px'
             })
         ])
         
-        return vitals_fig, gdnews2_fig, current_values
+        return heart_rate_fig, oxygen_saturation_fig, respiratory_rate_fig, blood_pressure_fig, gdnews2_fig, current_values
         
     except Exception as e:
         print(f"Error updating graphs: {e}")
-        return {}, {}, html.Div(f"Error fetching data: {str(e)}")
+        empty_fig = {
+            'data': [],
+            'layout': go.Layout(
+                title='Error loading data',
+                height=400
+            )
+        }
+        return empty_fig, empty_fig, empty_fig, empty_fig, empty_fig, html.Div(f"Error fetching data: {str(e)}")
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=48050)
+    app.run_server(host='0.0.0.0', port=48050, debug=True)
