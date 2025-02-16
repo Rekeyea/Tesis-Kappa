@@ -3,6 +3,7 @@ SET 'execution.checkpointing.mode' = 'EXACTLY_ONCE';
 SET 'execution.checkpointing.timeout' = '900s';
 SET 'execution.checkpointing.min-pause' = '5s';
 SET 'execution.checkpointing.max-concurrent-checkpoints' = '1';
+SET 'table.local-time-zone' = 'UTC';
 
 -- Create ticker with proper timestamp and watermark
 CREATE TABLE minute_ticker (
@@ -32,7 +33,7 @@ CREATE TABLE raw_measurements (
     battery DOUBLE,
     signal_strength DOUBLE,
     ingestion_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'topic' = 'raw.measurements',
     'connector' = 'kafka',
@@ -72,7 +73,7 @@ CREATE TABLE enriched_measurements (
     ingestion_timestamp TIMESTAMP(3),
     
     enrichment_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'topic' = 'enriched.measurements',
     'connector' = 'kafka',
@@ -255,7 +256,7 @@ CREATE TABLE measurements_respiratory_rate (
     enrichment_timestamp TIMESTAMP(3),
     
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.respiratory_rate',
@@ -278,7 +279,7 @@ CREATE TABLE measurements_oxygen_saturation (
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.oxygen_saturation',
@@ -301,7 +302,7 @@ CREATE TABLE measurements_blood_pressure_systolic (
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.blood_pressure_systolic',
@@ -324,7 +325,7 @@ CREATE TABLE measurements_heart_rate (
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.heart_rate',
@@ -347,7 +348,7 @@ CREATE TABLE measurements_temperature (
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.temperature',
@@ -370,7 +371,7 @@ CREATE TABLE measurements_consciousness (
     ingestion_timestamp TIMESTAMP(3),
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'measurements.consciousness',
@@ -503,7 +504,7 @@ CREATE TABLE scores_respiratory_rate (
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.respiratory_rate',
@@ -532,7 +533,7 @@ CREATE TABLE scores_oxygen_saturation (
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.oxygen_saturation',
@@ -561,7 +562,7 @@ CREATE TABLE scores_blood_pressure_systolic (
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.blood_pressure_systolic',
@@ -590,7 +591,7 @@ CREATE TABLE scores_heart_rate (
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.heart_rate',
@@ -619,7 +620,7 @@ CREATE TABLE scores_temperature (
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.temperature',
@@ -645,7 +646,7 @@ CREATE TABLE scores_consciousness (
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '5' SECONDS
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS
 ) WITH (
     'connector' = 'kafka',
     'topic' = 'scores.consciousness',
@@ -940,9 +941,10 @@ CREATE TABLE gdnews2_scores (
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3),
 
+    flink_timestamp TIMESTAMP(3),
     aggregation_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR aggregation_timestamp AS aggregation_timestamp - INTERVAL '5' SECONDS,
-
+    WATERMARK FOR aggregation_timestamp AS aggregation_timestamp - INTERVAL '10' SECONDS,
+    
     PRIMARY KEY (patient_id, window_start, window_end) NOT ENFORCED
 ) WITH (
     'connector' = 'upsert-kafka',
@@ -1189,7 +1191,9 @@ FROM (
             bp_val.scoring_timestamp,
             os.scoring_timestamp,
             rr.scoring_timestamp
-        )) as scoring_timestamp
+        )) as scoring_timestamp,
+
+        CURRENT_TIMESTAMP as flink_timestamp
 
     FROM respiratory_rate_window rr
     FULL JOIN oxygen_saturation_window os
@@ -1257,6 +1261,7 @@ CREATE TABLE doris_gdnews2_scores (
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3),
+    flink_timestamp TIMESTAMP(3),
     aggregation_timestamp TIMESTAMP(3),
     PRIMARY KEY (patient_id, window_start, window_end) NOT ENFORCED
 ) WITH (
@@ -1266,7 +1271,8 @@ CREATE TABLE doris_gdnews2_scores (
     'username' = 'kappa',
     'password' = 'kappa',
     'sink.label-prefix' = 'doris_sink_gdnews2',
-    'sink.properties.format' = 'json'
+    'sink.properties.format' = 'json',
+    'sink.properties.timezone' = 'UTC'
 );
 
 INSERT INTO doris_gdnews2_scores

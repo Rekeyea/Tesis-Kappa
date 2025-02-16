@@ -6,6 +6,7 @@ services:
       - FE_SERVERS=fe1:172.20.4.2:9010
       - FE_ID=1
       - PRIORITY_NETWORKS=172.20.0.0/16
+      - TIMEZONE=UTC
     volumes:
       - doris-fe-meta:/opt/apache-doris/fe/doris-meta/
       - doris-fe-log:/opt/apache-doris/fe/log/
@@ -30,6 +31,7 @@ services:
       - FE_SERVERS=fe1:172.20.4.2:9010
       - BE_ADDR=172.20.4.22:9050
       - PRIORITY_NETWORKS=172.20.0.0/16
+      - TIMEZONE=UTC
     volumes:
       - doris-be-storage-1:/opt/apache-doris/be/storage/
       - doris-be-script-1:/docker-entrypoint-initdb.d/
@@ -47,6 +49,7 @@ services:
       - FE_SERVERS=fe1:172.20.4.2:9010
       - BE_ADDR=172.20.4.23:9050
       - PRIORITY_NETWORKS=172.20.0.0/16
+      - TIMEZONE=UTC
     volumes:
       - doris-be-storage-2:/opt/apache-doris/be/storage/
       - doris-be-script-2:/docker-entrypoint-initdb.d/
@@ -64,6 +67,7 @@ services:
       - FE_SERVERS=fe1:172.20.4.2:9010
       - BE_ADDR=172.20.4.24:9050
       - PRIORITY_NETWORKS=172.20.0.0/16
+      - TIMEZONE=UTC
     volumes:
       - doris-be-storage-3:/opt/apache-doris/be/storage/
       - doris-be-script-3:/docker-entrypoint-initdb.d/

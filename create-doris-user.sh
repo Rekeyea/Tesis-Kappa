@@ -5,12 +5,15 @@ docker exec -i kappa-doris-fe-1 mysql -h 127.0.0.1 -P 9030 -u root << EOF
 CREATE USER 'kappa'@'%' IDENTIFIED BY 'kappa';
 GRANT ALL ON *.* TO 'kappa'@'%';
 
+SET GLOBAL TIME_ZONE = 'UTC';
+SET TIME_ZONE = 'UTC';
+
 CREATE DATABASE kappa;
 
 USE kappa;
 
 CREATE TABLE IF NOT EXISTS gdnews2_scores (
-    patient_id VARCHAR(36),  -- Changed from STRING to VARCHAR
+    patient_id VARCHAR(36),
     window_start DATETIME,
     window_end DATETIME,
     -- Raw measurements
@@ -47,6 +50,7 @@ CREATE TABLE IF NOT EXISTS gdnews2_scores (
     enrichment_timestamp DATETIME,
     routing_timestamp DATETIME,
     scoring_timestamp DATETIME,
+    flink_timestamp DATETIME,
     aggregation_timestamp DATETIME,
     storage_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 )

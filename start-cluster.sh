@@ -9,5 +9,6 @@ sudo sysctl -w vm.max_map_count=2000000
 docker compose up -d
 ./topics.sh
 echo "Waiting for Doris ..."
-sleep 10
+sleep 20
 ./create-doris-user.sh
+./flink-session.sh

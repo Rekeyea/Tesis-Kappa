@@ -3,7 +3,7 @@ CREATE DATABASE kappa;
 USE kappa;
 
 CREATE TABLE IF NOT EXISTS gdnews2_scores (
-    patient_id VARCHAR(36),  -- Changed from STRING to VARCHAR
+    patient_id VARCHAR(36),
     window_start DATETIME,
     window_end DATETIME,
     -- Raw measurements
@@ -41,8 +41,7 @@ CREATE TABLE IF NOT EXISTS gdnews2_scores (
     routing_timestamp DATETIME,
     scoring_timestamp DATETIME,
     aggregation_timestamp DATETIME,
-    storage_timestamp DATETIME DEFAULT "__DORIS_CREATE_TIME__",
-    updated_storage_timestamp DATETIME DEFAULT "__DORIS_CREATE_TIME__" UPDATE current_timestamp(),
+    storage_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 )
 UNIQUE KEY(patient_id, window_start, window_end)
 DISTRIBUTED BY HASH(patient_id) BUCKETS 4
