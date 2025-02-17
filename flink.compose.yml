@@ -1,5 +1,4 @@
 version: '3.9'
-
 services:
   jobmanager:
     image: flink:1.20.0
@@ -24,6 +23,11 @@ services:
         sql-gateway.enabled: true
         sql-gateway.endpoint.rest.port: 8083
         sql-gateway.endpoint.rest.address: 0.0.0.0
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
+        metrics.reporter.prom.host: 0.0.0.0
+        metrics.reporters: prom
+        metrics.reporter.prom.interval: 60 SECONDS
     ports:
       - "10200:8081"
       - "10210:8083"
@@ -33,19 +37,16 @@ services:
       - ./flink/jars/flink-doris-connector-1.20-24.1.0.jar:/opt/flink/lib/flink-doris-connector-1.20-24.1.0.jar
       - ./flink/jars/flink-connector-jdbc-3.2.0-1.19.jar:/opt/flink/lib/flink-connector-jdbc-3.2.0-1.19.jar
       - ./flink/jars/postgresql-42.7.5.jar:/opt/flink/lib/postgresql-42.7.5.jar
+      - ./flink/jars/flink-metrics-prometheus-1.20.0.jar:/opt/flink/lib/flink-metrics-prometheus-1.20.0.jar
       - ./flink/config/sql-client-defaults.yaml:/opt/flink/conf/sql-client-defaults.yaml
       - ./jobs:/opt/flink/bin/jobs
-    depends_on:
-      - postgres
-    deploy:
-      replicas: 1
     networks:
       kappa:
         ipv4_address: 172.20.3.2
 
-  taskmanager:
+  taskmanager1:
     image: flink:1.20.0
-    environment:
+    environment: &tm-env
       - JOB_MANAGER_RPC_ADDRESS=jobmanager
       - HADOOP_CLASSPATH='hadoop classpath'
       - AWS_ACCESS_KEY_ID=minio
@@ -62,31 +63,59 @@ services:
         taskmanager.memory.managed.size: 1g
         taskmanager.memory.network.max: 512m
         taskmanager.memory.framework.heap.size: 256m
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
+        metrics.reporter.prom.host: 0.0.0.0
+        metrics.reporters: prom
+        metrics.reporter.prom.interval: 60 SECONDS
     depends_on:
       - jobmanager
     command: taskmanager
-    volumes:
+    volumes: &tm-volumes
       - ./flink/jars/flink-sql-connector-kafka-3.3.0-1.20.jar:/opt/flink/lib/flink-sql-connector-kafka-3.3.0-1.20.jar
       - ./flink/jars/flink-doris-connector-1.20-24.1.0.jar:/opt/flink/lib/flink-doris-connector-1.20-24.1.0.jar
       - ./flink/jars/flink-connector-jdbc-3.2.0-1.19.jar:/opt/flink/lib/flink-connector-jdbc-3.2.0-1.19.jar
       - ./flink/jars/postgresql-42.7.5.jar:/opt/flink/lib/postgresql-42.7.5.jar
-    deploy:
-      replicas: 5
+      - ./flink/jars/flink-metrics-prometheus-1.20.0.jar:/opt/flink/lib/flink-metrics-prometheus-1.20.0.jar
     networks:
       - kappa
 
-  postgres:
-    image: postgres:latest
-    container_name: flink_postgres
-    environment:
-      POSTGRES_USER: flink
-      POSTGRES_PASSWORD: flinkpassword
-      POSTGRES_DB: flink_metadata
-    volumes:
-      - flink-postgres_data:/var/lib/postgresql/data
+  taskmanager2:
+    image: flink:1.20.0
+    environment: *tm-env
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    volumes: *tm-volumes
     networks:
-      kappa:
-        ipv4_address: 172.20.3.10
+      - kappa
 
-volumes:
-  flink-postgres_data:
+  taskmanager3:
+    image: flink:1.20.0
+    environment: *tm-env
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    volumes: *tm-volumes
+    networks:
+      - kappa
+
+  taskmanager4:
+    image: flink:1.20.0
+    environment: *tm-env
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    volumes: *tm-volumes
+    networks:
+      - kappa
+
+  taskmanager5:
+    image: flink:1.20.0
+    environment: *tm-env
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    volumes: *tm-volumes
+    networks:
+      - kappa

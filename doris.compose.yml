@@ -1,6 +1,6 @@
 services:
   doris-fe:
-    image: apache/doris:doris-fe-2.1.7
+    image: apache/doris:fe-2.1.8
     hostname: doris-fe
     environment:
       - FE_SERVERS=fe1:172.20.4.2:9010
@@ -25,7 +25,7 @@ services:
       retries: 3
 
   doris-be-1:
-    image: apache/doris:doris-be-2.1.7
+    image: apache/doris:be-2.1.8
     hostname: doris-be
     environment:
       - FE_SERVERS=fe1:172.20.4.2:9010
@@ -43,7 +43,7 @@ services:
       kappa:
         ipv4_address: 172.20.4.22
   doris-be-2:
-    image: apache/doris:doris-be-2.1.7
+    image: apache/doris:be-2.1.8
     hostname: doris-be
     environment:
       - FE_SERVERS=fe1:172.20.4.2:9010
@@ -61,7 +61,7 @@ services:
       kappa:
         ipv4_address: 172.20.4.23
   doris-be-3:
-    image: apache/doris:doris-be-2.1.7
+    image: apache/doris:be-2.1.8
     hostname: doris-be
     environment:
       - FE_SERVERS=fe1:172.20.4.2:9010
