@@ -3,13 +3,13 @@ startDelaySeconds: 120
 lowercaseOutputName: true
 lowercaseOutputLabelNames: true
 blacklistObjectNames:
-  - "kafka.consumer:type=*,id=*"
-  - "kafka.consumer:type=*,client-id=*"
-  - "kafka.consumer:type=*,client-id=*,node-id=*"
-  - "kafka.producer:type=*,id=*"
-  - "kafka.producer:type=*,client-id=*"
-  - "kafka.producer:type=*,client-id=*,node-id=*"
-  - "kafka.*:type=kafka-metrics-count,*"
+  # - "kafka.consumer:type=*,id=*"
+  # - "kafka.consumer:type=*,client-id=*"
+  # - "kafka.consumer:type=*,client-id=*,node-id=*"
+  # - "kafka.producer:type=*,id=*"
+  # - "kafka.producer:type=*,client-id=*"
+  # - "kafka.producer:type=*,client-id=*,node-id=*"
+  # - "kafka.*:type=kafka-metrics-count,*"
   # This will ignore the admin client metrics from Kafka Brokers and will blacklist certain metrics
   # that do not make sense for ingestion.
   # "kafka.admin.client:type=*, node-id=*, client-id=*"
@@ -393,3 +393,25 @@ rules:
       client-id: "$5"
       topic: "$2"
       partition: "$4"
+  
+  - pattern: "kafka.producer<type=producer-metrics, client-id=(.+)><>(record-send-rate)"
+    name: "kafka_producer_record_send_rate"
+    labels:
+      client_id: "$1"
+    type: GAUGE
+
+  - pattern: "kafka.consumer<type=consumer-fetch-manager-metrics, client-id=(.+)><>(records-consumed-rate)"
+    name: "kafka_consumer_records_consumed_rate"
+    labels:
+      client_id: "$1"
+    type: GAUGE
+
+  - pattern: 'kafka.server<type=BrokerTopicMetrics, name=(MessagesInPerSec|BytesInPerSec|BytesOutPerSec)><>(Count|OneMinuteRate|FiveMinuteRate|FifteenMinuteRate)'
+    name: kafka_server_brokertopicmetrics_$1_$2
+    type: GAUGE
+
+  - pattern: 'kafka.server<type=BrokerTopicMetrics, name=(MessagesInPerSec|BytesInPerSec|BytesOutPerSec), topic=(.+)><>(Count|OneMinuteRate|FiveMinuteRate|FifteenMinuteRate)'
+    name: kafka_server_brokertopicmetrics_$1_$3
+    type: GAUGE
+    labels:
+      topic: "$2"

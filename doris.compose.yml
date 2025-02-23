@@ -7,6 +7,8 @@ services:
       - FE_ID=1
       - PRIORITY_NETWORKS=172.20.0.0/16
       - TIMEZONE=UTC
+      - ENABLE_PROMETHEUS=true
+      - PROMETHEUS_PORT=8030
     volumes:
       - doris-fe-meta:/opt/apache-doris/fe/doris-meta/
       - doris-fe-log:/opt/apache-doris/fe/log/
@@ -32,6 +34,8 @@ services:
       - BE_ADDR=172.20.4.22:9050
       - PRIORITY_NETWORKS=172.20.0.0/16
       - TIMEZONE=UTC
+      - ENABLE_PROMETHEUS=true
+      - PROMETHEUS_PORT=8040
     volumes:
       - doris-be-storage-1:/opt/apache-doris/be/storage/
       - doris-be-script-1:/docker-entrypoint-initdb.d/
@@ -50,6 +54,8 @@ services:
       - BE_ADDR=172.20.4.23:9050
       - PRIORITY_NETWORKS=172.20.0.0/16
       - TIMEZONE=UTC
+      - ENABLE_PROMETHEUS=true
+      - PROMETHEUS_PORT=8040
     volumes:
       - doris-be-storage-2:/opt/apache-doris/be/storage/
       - doris-be-script-2:/docker-entrypoint-initdb.d/
@@ -68,6 +74,8 @@ services:
       - BE_ADDR=172.20.4.24:9050
       - PRIORITY_NETWORKS=172.20.0.0/16
       - TIMEZONE=UTC
+      - ENABLE_PROMETHEUS=true
+      - PROMETHEUS_PORT=8040
     volumes:
       - doris-be-storage-3:/opt/apache-doris/be/storage/
       - doris-be-script-3:/docker-entrypoint-initdb.d/
