@@ -377,6 +377,19 @@
           "legendFormat": "Doris",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "Prometheus"
+          },
+          "editorMode": "code",
+          "expr": "minio_cluster_usage_total_bytes / 1024 / 1024 / 1024",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Object Storage",
+          "range": true,
+          "refId": "C"
         }
       ],
       "title": "Storage",

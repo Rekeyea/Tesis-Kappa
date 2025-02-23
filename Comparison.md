@@ -20,6 +20,8 @@ sum (kafka_log_log_size)
 
 sum(doris_be_disks_local_used_capacity) / 1024 / 1024 / 1024
 
+minio_cluster_usage_total_bytes / 1024 / 1024 / 1024
+
 # Throughtput
 
 sum(rate(kafka_server_brokertopicmetrics_messagesinpersec{job="kafka"}[1m]))

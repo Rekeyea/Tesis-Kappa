@@ -8,7 +8,6 @@ services:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
       - MINIO_PROMETHEUS_AUTH_TYPE=public
-      - MINIO_PROMETHEUS_URL=http://prometheus:9090
       - MINIO_PROMETHEUS_JOB_ID=minio
     networks:
       kappa:
