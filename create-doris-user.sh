@@ -16,40 +16,49 @@ CREATE TABLE IF NOT EXISTS gdnews2_scores (
     patient_id VARCHAR(36),
     window_start DATETIME,
     window_end DATETIME,
-    -- Raw measurements
+
+    -- AVG Raw measurements
     respiratory_rate_value DOUBLE,
     oxygen_saturation_value DOUBLE,
     blood_pressure_value DOUBLE,
     heart_rate_value DOUBLE,
     temperature_value DOUBLE,
-    consciousness_value STRING,
+    consciousness_value DOUBLE,
+
     -- Raw NEWS2 scores
-    respiratory_rate_score DOUBLE,
-    oxygen_saturation_score DOUBLE,
-    blood_pressure_score DOUBLE,
-    heart_rate_score DOUBLE,
-    temperature_score DOUBLE,
-    consciousness_score DOUBLE,
-    raw_news2_total DOUBLE,
-    -- Adjusted gdNEWS2 scores
-    adjusted_respiratory_rate_score DOUBLE,
-    adjusted_oxygen_saturation_score DOUBLE,
-    adjusted_blood_pressure_score DOUBLE,
-    adjusted_heart_rate_score DOUBLE,
-    adjusted_temperature_score DOUBLE,
-    adjusted_consciousness_score DOUBLE,
-    gdnews2_total DOUBLE,
-    -- Quality and status
-    overall_confidence DOUBLE,
-    valid_parameters INT,
-    degraded_parameters INT,
-    invalid_parameters INT,
+    respiratory_rate_score INT,
+    oxygen_saturation_score INT,
+    blood_pressure_score INT,
+    heart_rate_score INT,
+    temperature_score INT,
+    consciousness_score INT,
+    news2_score INT,
+
+    -- Measurements statuses
+    respiratory_rate_status STRING,
+    oxygen_saturation_status STRING,
+    blood_pressure_status STRING,
+    heart_rate_status STRING,
+    temperature_status STRING,
+    consciousness_status STRING,
+
+    -- Trust gdNEWS2 scores
+    respiratory_rate_trust_score DOUBLE,
+    oxygen_saturation_trust_score DOUBLE,
+    blood_pressure_trust_score DOUBLE,
+    heart_rate_trust_score DOUBLE,
+    temperature_trust_score DOUBLE,
+    consciousness_trust_score DOUBLE,
+
+    news2_trust_score DOUBLE,
+
     -- Timestamps
     measurement_timestamp DATETIME,
     ingestion_timestamp DATETIME,
     enrichment_timestamp DATETIME,
     routing_timestamp DATETIME,
     scoring_timestamp DATETIME,
+
     flink_timestamp DATETIME,
     aggregation_timestamp DATETIME,
     storage_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
