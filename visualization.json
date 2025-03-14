@@ -141,7 +141,7 @@
             "editorMode": "code",
             "format": "table",
             "rawQuery": true,
-            "rawSql": "SELECT\n    DATE_SUB(measurement_timestamp,\n             INTERVAL MINUTE(measurement_timestamp) MINUTE) as minute_interval,\n    AVG(gdnews2_total) as Score\nFROM kappa.gdnews2_scores\nWHERE patient_id='$patient_id'\nGROUP BY DATE_SUB(measurement_timestamp,\n                  INTERVAL MINUTE(measurement_timestamp) MINUTE)\nORDER BY minute_interval;",
+            "rawSql": "SELECT\n    DATE_SUB(measurement_timestamp,\n             INTERVAL MINUTE(measurement_timestamp) MINUTE) as minute_interval,\n    AVG(news2_score) as Score\nFROM kappa.gdnews2_scores\nWHERE patient_id='$patient_id'\nGROUP BY DATE_SUB(measurement_timestamp,\n                  INTERVAL MINUTE(measurement_timestamp) MINUTE)\nORDER BY minute_interval;",
             "refId": "A",
             "sql": {
               "columns": [
