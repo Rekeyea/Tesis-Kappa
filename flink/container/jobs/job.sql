@@ -721,276 +721,191 @@ CREATE TABLE gdnews2_scores (
 
 
 INSERT INTO gdnews2_scores
-SELECT * 
-FROM (
-    WITH respiratory_rate_window AS (
-        SELECT 
-            patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
-            AVG(`value`) as respiratory_rate_value,
-            AVG(score) as score,
-            AVG(quality_weight) as quality_weight,
-            AVG(freshness_weight) as freshness_weight,
+SELECT
+    patient_id,
+    window_start,
+    window_end,
+    respiratory_rate_value,
+    oxygen_saturation_value,
+    blood_pressure_value,
+    heart_rate_value,
+    temperature_value,
+    consciousness_value,
 
-            MIN(measurement_timestamp) as measurement_timestamp,
-            MIN(ingestion_timestamp) as ingestion_timestamp,
-            MIN(enrichment_timestamp) as enrichment_timestamp,
-            MIN(routing_timestamp) as routing_timestamp,
-            MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_respiratory_rate
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
-    ),
-    oxygen_saturation_window AS (
-        SELECT 
-            patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
-            AVG(`value`) as oxygen_saturation_value,
-            AVG(score) as score,
-            AVG(quality_weight) as quality_weight,
-            AVG(freshness_weight) as freshness_weight,
+    respiratory_rate_score,
+    oxygen_saturation_score,
+    blood_pressure_score,
+    heart_rate_score,
+    temperature_score,
+    consciousness_score,
 
-            MIN(measurement_timestamp) as measurement_timestamp,
-            MIN(ingestion_timestamp) as ingestion_timestamp,
-            MIN(enrichment_timestamp) as enrichment_timestamp,
-            MIN(routing_timestamp) as routing_timestamp,
-            MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_oxygen_saturation
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
-    ),
-    blood_pressure_window AS (
-        SELECT 
-            patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
-            AVG(`value`) as blood_pressure_value,
-            AVG(score) as score,
-            AVG(quality_weight) as quality_weight,
-            AVG(freshness_weight) as freshness_weight,
+    -- raw NEWS2 total
+    respiratory_rate_score +
+    oxygen_saturation_score +
+    blood_pressure_score +
+    heart_rate_score +
+    temperature_score +
+    consciousness_score AS news2_score,
 
-            MIN(measurement_timestamp) as measurement_timestamp,
-            MIN(ingestion_timestamp) as ingestion_timestamp,
-            MIN(enrichment_timestamp) as enrichment_timestamp,
-            MIN(routing_timestamp) as routing_timestamp,
-            MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_blood_pressure_systolic
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
-    ),
-    heart_rate_window AS (
-        SELECT 
-            patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
-            AVG(`value`) as heart_rate_value,
-            AVG(score) as score,
-            AVG(quality_weight) as quality_weight,
-            AVG(freshness_weight) as freshness_weight,
+    -- Statuses
+    CAST(CASE 
+        WHEN 0.7 * respiratory_rate_quality_weight + 0.3 *respiratory_rate_freshness_weight > 0.75 THEN 'VALID'
+        WHEN 0.7 * respiratory_rate_quality_weight + 0.3 *respiratory_rate_freshness_weight > 0.5 THEN 'DEGRADED'
+        ELSE 'INVALID'
+    END 
+    AS STRING) as respiratory_rate_status,
+    CAST(CASE 
+        WHEN 0.7 * oxygen_saturation_quality_weight + 0.3 *oxygen_saturation_freshness_weight > 0.75 THEN 'VALID'
+        WHEN 0.7 * oxygen_saturation_quality_weight + 0.3 *oxygen_saturation_freshness_weight > 0.5 THEN 'DEGRADED'
+        ELSE 'INVALID'
+    END
+    AS STRING) as oxygen_saturation_status,
+    CAST(CASE 
+        WHEN 0.7 * blood_pressure_quality_weight + 0.3 *blood_pressure_freshness_weight > 0.75 THEN 'VALID'
+        WHEN 0.7 * blood_pressure_quality_weight + 0.3 *blood_pressure_freshness_weight > 0.5 THEN 'DEGRADED'
+        ELSE 'INVALID'
+    END
+    AS STRING) as blood_pressure_status,
+    CAST(CASE 
+        WHEN 0.7 * heart_rate_quality_weight + 0.3 *heart_rate_freshness_weight > 0.75 THEN 'VALID'
+        WHEN 0.7 * heart_rate_quality_weight + 0.3 *heart_rate_freshness_weight > 0.5 THEN 'DEGRADED'
+        ELSE 'INVALID'
+    END
+    AS STRING) as heart_rate_status,
+    CAST(CASE 
+        WHEN 0.7 * temperature_quality_weight + 0.3 *temperature_freshness_weight > 0.75 THEN 'VALID'
+        WHEN 0.7 * temperature_quality_weight + 0.3 *temperature_freshness_weight > 0.5 THEN 'DEGRADED'
+        ELSE 'INVALID'
+    END
+    AS STRING) as temperature_status,
+    CAST(CASE 
+        WHEN 0.7 * consciousness_quality_weight + 0.3 *consciousness_freshness_weight > 0.75 THEN 'VALID'
+        WHEN 0.7 * consciousness_quality_weight + 0.3 *consciousness_freshness_weight > 0.5 THEN 'DEGRADED'
+        ELSE 'INVALID'
+    END
+    AS STRING) as consciousness_status,
 
-            MIN(measurement_timestamp) as measurement_timestamp,
-            MIN(ingestion_timestamp) as ingestion_timestamp,
-            MIN(enrichment_timestamp) as enrichment_timestamp,
-            MIN(routing_timestamp) as routing_timestamp,
-            MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_heart_rate
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
-    ),
-    temperature_window AS (
-        SELECT 
-            patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
-            AVG(`value`) as temperature_value,
-            AVG(score) as score,
-            AVG(quality_weight) as quality_weight,
-            AVG(freshness_weight) as freshness_weight,
+    -- adjusted scores
+    0.7 * respiratory_rate_quality_weight + 0.3 *respiratory_rate_freshness_weight AS respiratory_rate_trust_score,
+    0.7 * oxygen_saturation_quality_weight + 0.3 *oxygen_saturation_freshness_weight AS oxygen_saturation_trust_score,
+    0.7 * blood_pressure_quality_weight + 0.3 *blood_pressure_freshness_weight AS blood_pressure_trust_score,
+    0.7 * heart_rate_quality_weight + 0.3 *heart_rate_freshness_weight AS heart_rate_trust_score,
+    0.7 * temperature_quality_weight + 0.3 *temperature_freshness_weight AS temperature_trust_score,
+    0.7 * consciousness_quality_weight + 0.3 *consciousness_freshness_weight AS consciousness_trust_score,
 
-            MIN(measurement_timestamp) as measurement_timestamp,
-            MIN(ingestion_timestamp) as ingestion_timestamp,
-            MIN(enrichment_timestamp) as enrichment_timestamp,
-            MIN(routing_timestamp) as routing_timestamp,
-            MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_temperature
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
-    ),
-    consciousness_window AS (
-        SELECT 
-            patient_id,
-            TUMBLE_START(measurement_timestamp, INTERVAL '1' MINUTE) AS window_start,
-            TUMBLE_END(measurement_timestamp, INTERVAL '1' MINUTE) AS window_end,
-            AVG(`value`) as consciousness_value,
-            AVG(score) as score,
-            AVG(quality_weight) as quality_weight,
-            AVG(freshness_weight) as freshness_weight,
-
-            MIN(measurement_timestamp) as measurement_timestamp,
-            MIN(ingestion_timestamp) as ingestion_timestamp,
-            MIN(enrichment_timestamp) as enrichment_timestamp,
-            MIN(routing_timestamp) as routing_timestamp,
-            MIN(scoring_timestamp) as scoring_timestamp
-        FROM scores_consciousness
-        GROUP BY patient_id, TUMBLE(measurement_timestamp, INTERVAL '1' MINUTE)
-    )
+    (
+        0.7 * respiratory_rate_quality_weight + 0.3 *respiratory_rate_freshness_weight +
+        0.7 * oxygen_saturation_quality_weight + 0.3 *oxygen_saturation_freshness_weight +
+        0.7 * blood_pressure_quality_weight + 0.3 *blood_pressure_freshness_weight +
+        0.7 * heart_rate_quality_weight + 0.3 *heart_rate_freshness_weight +
+        0.7 * temperature_quality_weight + 0.3 *temperature_freshness_weight +
+        0.7 * consciousness_quality_weight + 0.3 *consciousness_freshness_weight
+    ) / 6 AS news2_trust_score,
     
-    SELECT 
-        COALESCE(rr.patient_id, os.patient_id, bp_val.patient_id, hr.patient_id, temp.patient_id, cons.patient_id) AS patient_id,
-        COALESCE(rr.window_start, os.window_start, bp_val.window_start, hr.window_start, temp.window_start, cons.window_start) AS window_start,
-        COALESCE(rr.window_end, os.window_end, bp_val.window_end, hr.window_end, temp.window_end, cons.window_end) AS window_end,
-        -- Raw measurements
-        COALESCE(AVG(rr.respiratory_rate_value), 0) as respiratory_rate_value,
-        COALESCE(AVG(os.oxygen_saturation_value), 0) as oxygen_saturation_value,
-        COALESCE(AVG(bp_val.blood_pressure_value), 0) as blood_pressure_value,
-        COALESCE(AVG(hr.heart_rate_value), 0) as heart_rate_value,
-        COALESCE(AVG(temp.temperature_value), 0) as temperature_value,
-        COALESCE(AVG(cons.consciousness_value), 0) as consciousness_value,
-        
-        -- Raw NEWS2 scores
-        COALESCE(AVG(rr.score), 0) as respiratory_rate_score,
-        COALESCE(AVG(os.score), 0) as oxygen_saturation_score,
-        COALESCE(AVG(bp_val.score), 0) as blood_pressure_score,
-        COALESCE(AVG(hr.score), 0) as heart_rate_score,
-        COALESCE(AVG(temp.score), 0) as temperature_score,
-        COALESCE(AVG(cons.score), 0) as consciousness_score,
-        
-        -- Calculate raw NEWS2 total
-        (
-            COALESCE(AVG(rr.score), 0) +
-            COALESCE(AVG(os.score), 0) +
-            COALESCE(AVG(bp_val.score), 0) +
-            COALESCE(AVG(hr.score), 0) +
-            COALESCE(AVG(temp.score), 0) +
-            COALESCE(AVG(cons.score), 0)) as news2_score,
-        
-        -- Measurements statuses
-        CAST(CASE 
-            WHEN 0.7 * AVG(rr.quality_weight) + 0.3 * AVG(rr.freshness_weight) > 0.75 THEN 'VALID'
-            WHEN 0.7 * AVG(rr.quality_weight) + 0.3 * AVG(rr.freshness_weight) > 0.5 THEN 'DEGRADED'
-            ELSE 'INVALID'
-        END 
-        AS STRING) as respiratory_rate_status,
-        CAST(CASE 
-            WHEN 0.7 * AVG(os.quality_weight) + 0.3 * AVG(os.freshness_weight) > 0.75 THEN 'VALID'
-            WHEN 0.7 * AVG(os.quality_weight) + 0.3 * AVG(os.freshness_weight) > 0.5 THEN 'DEGRADED'
-            ELSE 'INVALID'
-        END
-        AS STRING) as oxygen_saturation_status,
-        CAST(CASE 
-            WHEN 0.7 * AVG(bp_val.quality_weight) + 0.3 * AVG(bp_val.freshness_weight) > 0.75 THEN 'VALID'
-            WHEN 0.7 * AVG(bp_val.quality_weight) + 0.3 * AVG(bp_val.freshness_weight) > 0.5 THEN 'DEGRADED'
-            ELSE 'INVALID'
-        END
-        AS STRING) as blood_pressure_status,
-        CAST(CASE 
-            WHEN 0.7 * AVG(hr.quality_weight) + 0.3 * AVG(hr.freshness_weight) > 0.75 THEN 'VALID'
-            WHEN 0.7 * AVG(hr.quality_weight) + 0.3 * AVG(hr.freshness_weight) > 0.5 THEN 'DEGRADED'
-            ELSE 'INVALID'
-        END
-        AS STRING) as heart_rate_status,
-        CAST(CASE 
-            WHEN 0.7 * AVG(temp.quality_weight) + 0.3 * AVG(temp.freshness_weight) > 0.75 THEN 'VALID'
-            WHEN 0.7 * AVG(temp.quality_weight) + 0.3 * AVG(temp.freshness_weight) > 0.5 THEN 'DEGRADED'
-            ELSE 'INVALID'
-        END
-        AS STRING) as temperature_status,
-        CAST(CASE 
-            WHEN 0.7 * AVG(cons.quality_weight) + 0.3 * AVG(cons.freshness_weight) > 0.75 THEN 'VALID'
-            WHEN 0.7 * AVG(cons.quality_weight) + 0.3 * AVG(cons.freshness_weight) > 0.5 THEN 'DEGRADED'
-            ELSE 'INVALID'
-        END
-        AS STRING) as consciousness_status,
+    -- use aggregated timestamps (make sure these come after the parameters)
+    measurement_timestamp,
+    ingestion_timestamp,
+    enrichment_timestamp,
+    routing_timestamp,
+    scoring_timestamp,
+    CURRENT_TIMESTAMP AS flink_timestamp
+FROM (
+    WITH scores AS (
+        SELECT 
+            `value` as rr_value, CAST(NULL AS INT) as os_value, CAST(NULL AS INT) as bp_value, CAST(NULL AS INT) as hr_value, CAST(NULL AS INT) as tp_value, CAST(NULL AS INT) as cs_value,
+            score as rr_score, CAST(NULL AS INT) as os_score, CAST(NULL AS INT) as bp_score, CAST(NULL AS INT) as hr_score, CAST(NULL AS INT) as tp_score, CAST(NULL AS INT) as cs_score,
+            quality_weight as rr_quality_weight, CAST(NULL AS INT) as os_quality_weight, CAST(NULL AS INT) as bp_quality_weight, CAST(NULL AS INT) as hr_quality_weight, CAST(NULL AS INT) as tp_quality_weight, CAST(NULL AS INT) as cs_quality_weight,
+            freshness_weight as rr_freshness_weight, CAST(NULL AS INT) as os_freshness_weight, CAST(NULL AS INT) as bp_freshness_weight, CAST(NULL AS INT) as hr_freshness_weight, CAST(NULL AS INT) as tp_freshness_weight, CAST(NULL AS INT) as cs_freshness_weight,
+            patient_id, measurement_timestamp, ingestion_timestamp, enrichment_timestamp, routing_timestamp, scoring_timestamp
+        FROM scores_respiratory_rate
+        UNION ALL
+        SELECT 
+            CAST(NULL AS INT) as rr_value, `value` as os_value, CAST(NULL AS INT) as bp_value, CAST(NULL AS INT) as hr_value, CAST(NULL AS INT) as tp_value, CAST(NULL AS INT) as cs_value,
+            CAST(NULL AS INT) as rr_score, score as os_score, CAST(NULL AS INT) as bp_score, CAST(NULL AS INT) as hr_score, CAST(NULL AS INT) as tp_score, CAST(NULL AS INT) as cs_score,
+            CAST(NULL AS INT) as rr_quality_weight, quality_weight as os_quality_weight, CAST(NULL AS INT) as bp_quality_weight, CAST(NULL AS INT) as hr_quality_weight, CAST(NULL AS INT) as tp_quality_weight, CAST(NULL AS INT) as cs_quality_weight,
+            CAST(NULL AS INT) as rr_freshness_weight, freshness_weight as os_freshness_weight, CAST(NULL AS INT) as bp_freshness_weight, CAST(NULL AS INT) as hr_freshness_weight, CAST(NULL AS INT) as tp_freshness_weight, CAST(NULL AS INT) as cs_freshness_weight,
+            patient_id, measurement_timestamp, ingestion_timestamp, enrichment_timestamp, routing_timestamp , scoring_timestamp
+        FROM scores_oxygen_saturation
+        UNION ALL
+        SELECT 
+            CAST(NULL AS INT) as rr_value, CAST(NULL AS INT) as os_value, `value` as bp_value, CAST(NULL AS INT) as hr_value, CAST(NULL AS INT) as tp_value, CAST(NULL AS INT) as cs_value,
+            CAST(NULL AS INT) as rr_score, CAST(NULL AS INT) as os_score, score as bp_score, CAST(NULL AS INT) as hr_score, CAST(NULL AS INT) as tp_score, CAST(NULL AS INT) as cs_score,
+            CAST(NULL AS INT) as rr_quality_weight, CAST(NULL AS INT) as os_quality_weight, quality_weight as bp_quality_weight, CAST(NULL AS INT) as hr_quality_weight, CAST(NULL AS INT) as tp_quality_weight, CAST(NULL AS INT) as cs_quality_weight,
+            CAST(NULL AS INT) as rr_freshness_weight, CAST(NULL AS INT) as os_freshness_weight, freshness_weight as bp_freshness_weight, CAST(NULL AS INT) as hr_freshness_weight, CAST(NULL AS INT) as tp_freshness_weight, CAST(NULL AS INT) as cs_freshness_weight,
+            patient_id, measurement_timestamp, ingestion_timestamp, enrichment_timestamp, routing_timestamp , scoring_timestamp
+        FROM scores_blood_pressure_systolic
+        UNION ALL
+        SELECT
+            CAST(NULL AS INT) as rr_value, CAST(NULL AS INT) as os_value, CAST(NULL AS INT) as bp_value, `value` as hr_value, CAST(NULL AS INT) as tp_value, CAST(NULL AS INT) as cs_value,
+            CAST(NULL AS INT) as rr_score, CAST(NULL AS INT) as os_score, CAST(NULL AS INT) as bp_score, score as hr_score, CAST(NULL AS INT) as tp_score, CAST(NULL AS INT) as cs_score,
+            CAST(NULL AS INT) as rr_quality_weight, CAST(NULL AS INT) as os_quality_weight, CAST(NULL AS INT) as bp_quality_weight, quality_weight as hr_quality_weight, CAST(NULL AS INT) as tp_quality_weight, CAST(NULL AS INT) as cs_quality_weight,
+            CAST(NULL AS INT) as rr_freshness_weight, CAST(NULL AS INT) as os_freshness_weight, CAST(NULL AS INT) as bp_freshness_weight, freshness_weight as hr_freshness_weight, CAST(NULL AS INT) as tp_freshness_weight, CAST(NULL AS INT) as cs_freshness_weight,
+            patient_id, measurement_timestamp, ingestion_timestamp, enrichment_timestamp, routing_timestamp , scoring_timestamp
+        FROM scores_heart_rate
+        UNION ALL
+        SELECT 
+            CAST(NULL AS INT) as rr_value, CAST(NULL AS INT) as os_value, CAST(NULL AS INT) as bp_value, CAST(NULL AS INT) as hr_value, `value` as tp_value, CAST(NULL AS INT) as cs_value,
+            CAST(NULL AS INT) as rr_score, CAST(NULL AS INT) as os_score, CAST(NULL AS INT) as bp_score, CAST(NULL AS INT) as hr_score, score as tp_score, CAST(NULL AS INT) as cs_score,
+            CAST(NULL AS INT) as rr_quality_weight, CAST(NULL AS INT) as os_quality_weight, CAST(NULL AS INT) as bp_quality_weight, CAST(NULL AS INT) as hr_quality_weight, quality_weight as tp_quality_weight, CAST(NULL AS INT) as cs_quality_weight,
+            CAST(NULL AS INT) as rr_freshness_weight, CAST(NULL AS INT) as os_freshness_weight, CAST(NULL AS INT) as bp_freshness_weight, CAST(NULL AS INT) as hr_freshness_weight, freshness_weight as tp_freshness_weight, CAST(NULL AS INT) as cs_freshness_weight,
+            patient_id, measurement_timestamp, ingestion_timestamp, enrichment_timestamp, routing_timestamp , scoring_timestamp
+        FROM scores_temperature
+        UNION ALL
+        SELECT 
+            CAST(NULL AS INT) as rr_value, CAST(NULL AS INT) as os_value, CAST(NULL AS INT) as bp_value, CAST(NULL AS INT) as hr_value, CAST(NULL AS INT) as tp_value, `value` as cs_value,
+            CAST(NULL AS INT) as rr_score, CAST(NULL AS INT) as os_score, CAST(NULL AS INT) as bp_score, CAST(NULL AS INT) as hr_score, CAST(NULL AS INT) as tp_score, score as cs_score,
+            CAST(NULL AS INT) as rr_quality_weight, CAST(NULL AS INT) as os_quality_weight, CAST(NULL AS INT) as bp_quality_weight, CAST(NULL AS INT) as hr_quality_weight, CAST(NULL AS INT) as tp_quality_weight, quality_weight as cs_quality_weight,
+            CAST(NULL AS INT) as rr_freshness_weight, CAST(NULL AS INT) as os_freshness_weight, CAST(NULL AS INT) as bp_freshness_weight, CAST(NULL AS INT) as hr_freshness_weight, CAST(NULL AS INT) as tp_freshness_weight, freshness_weight as cs_freshness_weight,
+            patient_id, measurement_timestamp, ingestion_timestamp, enrichment_timestamp, routing_timestamp , scoring_timestamp
+        FROM scores_consciousness
+    )
+    SELECT
+        patient_id,
+        window_start,
+        MAX(window_end) as window_end,
+        COALESCE(AVG(rr_value), 0) AS respiratory_rate_value,
+        COALESCE(AVG(os_value), 0) AS oxygen_saturation_value,
+        COALESCE(AVG(bp_value), 0) AS blood_pressure_value,
+        COALESCE(AVG(hr_value), 0) AS heart_rate_value,
+        COALESCE(AVG(tp_value), 0) AS temperature_value,
+        COALESCE(AVG(cs_value), 0) AS consciousness_value,
 
-        -- Trust scores
-        0.7 * AVG(rr.quality_weight) + 0.3 * AVG(rr.freshness_weight) AS respiratory_rate_trust_score,
-        0.7 * AVG(os.quality_weight) + 0.3 * AVG(os.freshness_weight) AS oxygen_saturation_trust_score,
-        0.7 * AVG(bp_val.quality_weight) + 0.3 * AVG(bp_val.freshness_weight) AS blood_pressure_trust_score,
-        0.7 * AVG(hr.quality_weight) + 0.3 * AVG(hr.freshness_weight) AS heart_rate_trust_score,
-        0.7 * AVG(temp.quality_weight) + 0.3 * AVG(temp.freshness_weight) AS temperature_trust_score,
-        0.7 * AVG(cons.quality_weight) + 0.3 * AVG(cons.freshness_weight) AS consciousness_trust_score,
+        COALESCE(AVG(rr_score), 0) AS respiratory_rate_score,
+        COALESCE(AVG(os_score), 0) AS oxygen_saturation_score,
+        COALESCE(AVG(bp_score), 0) AS blood_pressure_score,
+        COALESCE(AVG(hr_score), 0) AS heart_rate_score,
+        COALESCE(AVG(tp_score), 0) AS temperature_score,
+        COALESCE(AVG(cs_score), 0) AS consciousness_score, 
 
-        (
-            0.7 * AVG(rr.quality_weight) + 0.3 * AVG(rr.freshness_weight) +            
-            0.7 * AVG(os.quality_weight) + 0.3 * AVG(os.freshness_weight) +
-            0.7 * AVG(bp_val.quality_weight) + 0.3 * AVG(bp_val.freshness_weight) +
-            0.7 * AVG(hr.quality_weight) + 0.3 * AVG(hr.freshness_weight) +
-            0.7 * AVG(temp.quality_weight) + 0.3 * AVG(temp.freshness_weight) +
-            0.7 * AVG(cons.quality_weight) + 0.3 * AVG(cons.freshness_weight)
-        ) / 6 AS news2_trust_score,
+        COALESCE(AVG(rr_quality_weight), 0.2) AS respiratory_rate_quality_weight,
+        COALESCE(AVG(os_quality_weight), 0.2) AS oxygen_saturation_quality_weight,
+        COALESCE(AVG(bp_quality_weight), 0.2) AS blood_pressure_quality_weight,
+        COALESCE(AVG(hr_quality_weight), 0.2) AS heart_rate_quality_weight,
+        COALESCE(AVG(tp_quality_weight), 0.2) AS temperature_quality_weight,
+        COALESCE(AVG(cs_quality_weight), 0.2) AS consciousness_quality_weight,
 
-        
-        -- Timestamps
-        MIN(COALESCE(
-            rr.measurement_timestamp,
-            os.measurement_timestamp,
-            bp_val.measurement_timestamp,
-            hr.measurement_timestamp,
-            temp.measurement_timestamp,
-            cons.measurement_timestamp
-        )) as measurement_timestamp,
-        
-        MIN(COALESCE(
-            cons.ingestion_timestamp,
-            temp.ingestion_timestamp,
-            hr.ingestion_timestamp,
-            bp_val.ingestion_timestamp,
-            os.ingestion_timestamp,
-            rr.ingestion_timestamp
-        )) as ingestion_timestamp,
-        
-        MIN(COALESCE(
-            cons.enrichment_timestamp,
-            temp.enrichment_timestamp,
-            hr.enrichment_timestamp,
-            bp_val.enrichment_timestamp,
-            os.enrichment_timestamp,
-            rr.enrichment_timestamp
-        )) as enrichment_timestamp,
-        
-        MIN(COALESCE(
-            cons.routing_timestamp,
-            temp.routing_timestamp,
-            hr.routing_timestamp,
-            bp_val.routing_timestamp,
-            os.routing_timestamp,
-            rr.routing_timestamp
-        )) as routing_timestamp,
-        
-        MIN(COALESCE(
-            cons.scoring_timestamp,
-            temp.scoring_timestamp,
-            hr.scoring_timestamp,
-            bp_val.scoring_timestamp,
-            os.scoring_timestamp,
-            rr.scoring_timestamp
-        )) as scoring_timestamp,
 
-        CURRENT_TIMESTAMP as flink_timestamp
+        COALESCE(AVG(rr_freshness_weight), 0.2) AS respiratory_rate_freshness_weight,
+        COALESCE(AVG(os_freshness_weight), 0.2) AS oxygen_saturation_freshness_weight,
+        COALESCE(AVG(bp_freshness_weight), 0.2) AS blood_pressure_freshness_weight,
+        COALESCE(AVG(hr_freshness_weight), 0.2) AS heart_rate_freshness_weight,
+        COALESCE(AVG(tp_freshness_weight), 0.2) AS temperature_freshness_weight,
+        COALESCE(AVG(cs_freshness_weight), 0.2) AS consciousness_freshness_weight,
 
-    FROM respiratory_rate_window rr
-    FULL JOIN oxygen_saturation_window os
-        ON rr.patient_id = os.patient_id
-        AND rr.window_start = os.window_start
-        AND rr.window_end = os.window_end
-    FULL JOIN blood_pressure_window bp_val
-        ON rr.patient_id = bp_val.patient_id
-        AND rr.window_start = bp_val.window_start
-        AND rr.window_end = bp_val.window_end
-    FULL JOIN heart_rate_window hr
-        ON rr.patient_id = hr.patient_id
-        AND rr.window_start = hr.window_start
-        AND rr.window_end = hr.window_end
-    FULL JOIN temperature_window temp
-        ON rr.patient_id = temp.patient_id
-        AND rr.window_start = temp.window_start
-        AND rr.window_end = temp.window_end
-    FULL JOIN consciousness_window cons
-        ON rr.patient_id = cons.patient_id
-        AND rr.window_start = cons.window_start
-        AND rr.window_end = cons.window_end
-    GROUP BY
-        COALESCE(rr.patient_id, os.patient_id, bp_val.patient_id, hr.patient_id, temp.patient_id, cons.patient_id),
-        COALESCE(rr.window_start, os.window_start, bp_val.window_start, hr.window_start, temp.window_start, cons.window_start),
-        COALESCE(rr.window_end, os.window_end, bp_val.window_end, hr.window_end, temp.window_end, cons.window_end)
-) v;
+        MIN(measurement_timestamp) AS measurement_timestamp,
+        MIN(ingestion_timestamp) AS ingestion_timestamp,
+        MIN(enrichment_timestamp) AS enrichment_timestamp,
+        MIN(routing_timestamp) AS routing_timestamp,
+        MIN(scoring_timestamp) AS scoring_timestamp
+    FROM TABLE(
+        TUMBLE(
+            TABLE scores, 
+            DESCRIPTOR(measurement_timestamp), 
+            INTERVAL '1' MINUTES
+        )
+    ) AS gdnews2
+    GROUP BY patient_id, window_start
+) AS gdnews2;
 
 
 CREATE TABLE doris_gdnews2_scores (
