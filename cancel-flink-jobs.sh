@@ -1,1 +1,0 @@
-docker exec -it jobmanager sh -c 'flink list | awk "/RUNNING/ {print \$4}" | xargs -I {} flink cancel {}'

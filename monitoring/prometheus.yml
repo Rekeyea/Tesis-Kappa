@@ -1,0 +1,50 @@
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+        - prometheus:9090
+
+  - job_name: node
+    static_configs:
+      - targets:
+        - node-exporter:9100
+
+  - job_name: 'kafka'
+    static_configs:
+      - targets:
+        - 'kafka-1:8091'
+        - 'kafka-2:8091'
+        - 'kafka-3:8091'
+    metrics_path: /metrics
+
+  - job_name: 'flink-jobmanager'
+    static_configs:
+      - targets:
+        - 'jobmanager:9249'
+    metrics_path: /metrics
+
+  - job_name: 'flink-taskmanager'
+    static_configs:
+      - targets:
+        - 'taskmanager1:9249'
+        - 'taskmanager2:9249'
+        - 'taskmanager3:9249'
+        - 'taskmanager4:9249'
+        - 'taskmanager5:9249'
+    metrics_path: /metrics
+  
+  - job_name: 'minio'
+    metrics_path: /minio/v2/metrics/cluster
+    static_configs:
+      - targets: ['minio:9000']
+
+  - job_name: 'doris'
+    static_configs:
+      - targets:
+        - 'doris-fe:8030'
+        - 'doris-be-1:8040'
+        - 'doris-be-2:8040'
+        - 'doris-be-3:8040'

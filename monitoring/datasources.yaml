@@ -1,0 +1,21 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+
+  - name: Doris
+    type: mysql
+    access: proxy
+    url: doris-fe:9030
+    user: kappa
+    secureJsonData:
+      password: kappa
+    jsonData:
+      database: 'kappa'
+      maxOpenConns: 100
+      maxIdleConns: 100
+      connMaxLifetime: 14400
