@@ -66,19 +66,19 @@ SELECT
             WHEN device_id LIKE 'MEDICAL%' THEN 1.0
             WHEN device_id LIKE 'PREMIUM%' THEN 0.7
             ELSE 0.4
-        END * 0.4 +
+        END * 0.7 +
         CASE
             WHEN battery >= 80 THEN 1.0
             WHEN battery >= 50 THEN 0.8
             WHEN battery >= 20 THEN 0.6
             ELSE 0.4
-        END * 0.3 +
+        END * 0.2 +
         CASE
             WHEN signal_strength >= 0.8 THEN 1.0
             WHEN signal_strength >= 0.6 THEN 0.8
             WHEN signal_strength >= 0.4 THEN 0.6
             ELSE 0.4
-        END * 0.3
+        END * 0.1
     ) AS DECIMAL(7,2)) AS quality_weight,
 
     CASE
