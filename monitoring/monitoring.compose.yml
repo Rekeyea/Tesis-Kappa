@@ -29,6 +29,18 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     depends_on:
       - prometheus
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - kappa
+    ports:
+      - 8083:8080
 
 volumes:
   grafana-storage:

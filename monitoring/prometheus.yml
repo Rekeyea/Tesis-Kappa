@@ -48,3 +48,8 @@ scrape_configs:
         - 'doris-be-1:8040'
         - 'doris-be-2:8040'
         - 'doris-be-3:8040'
+  
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets:
+        - 'cadvisor:8080'
