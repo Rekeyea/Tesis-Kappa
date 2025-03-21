@@ -1,7 +1,7 @@
 SET 'execution.runtime-mode' = 'streaming';
 SET 'execution.checkpointing.interval' = '1 s';
 SET 'execution.checkpointing.mode' = 'EXACTLY_ONCE';
-SET 'execution.checkpointing.timeout' = '900s';
+SET 'execution.checkpointing.timeout' = '120s';
 SET 'execution.checkpointing.min-pause' = '5s';
 SET 'execution.checkpointing.max-concurrent-checkpoints' = '1';
 SET 'table.local-time-zone' = 'UTC';
