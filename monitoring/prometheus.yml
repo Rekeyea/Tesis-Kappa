@@ -33,7 +33,6 @@ scrape_configs:
         - 'taskmanager2:9249'
         - 'taskmanager3:9249'
         - 'taskmanager4:9249'
-        - 'taskmanager5:9249'
     metrics_path: /metrics
   
   - job_name: 'minio'
@@ -49,7 +48,7 @@ scrape_configs:
         - 'doris-be-2:8040'
         - 'doris-be-3:8040'
   
-  - job_name: 'cadvisor'
+  - job_name: 'docker-stats'
     static_configs:
       - targets:
-        - 'cadvisor:8080'
+        - 'docker-stats-exporter:9487'

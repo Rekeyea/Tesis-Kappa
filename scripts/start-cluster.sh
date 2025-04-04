@@ -29,6 +29,6 @@ docker compose up -d
 cd ./scripts
 ./topics.sh
 echo "Waiting for Doris ..."
-sleep 20
+sleep 30
 ./create-doris-user.sh
 ./flink-session.sh

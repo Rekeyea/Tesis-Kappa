@@ -29,18 +29,15 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     depends_on:
       - prometheus
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor
+  docker-stats-exporter:
+    image: wywywywy/docker_stats_exporter:latest
     volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - kappa
-    ports:
-      - 8083:8080
+    restart: unless-stopped
+    environment:
+      - DOCKER_STATS_INTERVAL=15  # Optional: set stats collection interval in seconds
 
 volumes:
   grafana-storage:
