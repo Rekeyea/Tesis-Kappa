@@ -50,6 +50,7 @@ done
 # Create score aggregation topics
 create_topic "patient.heartbeats"
 create_topic "all_measurement_scores"
+create_topic "scores"
 create_topic "gdnews2_scores"
 
 # List all topics

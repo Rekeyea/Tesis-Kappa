@@ -11,11 +11,6 @@ services:
         jobmanager.rpc.address: jobmanager
         jobmanager.bind-host: 0.0.0.0
         rest.bind-address: 0.0.0.0
-        jobmanager.memory.process.size: 6g
-        jobmanager.memory.heap.size: 3g
-        jobmanager.memory.off-heap.size: 1g
-        jobmanager.memory.jvm-metaspace.size: 1g
-        jobmanager.memory.jvm-overhead.min: 1g
         state.backend: rocksdb
         state.backend.incremental: true
         state.checkpoints.dir: file:///opt/flink/checkpoints
@@ -28,6 +23,14 @@ services:
         metrics.reporter.prom.host: 0.0.0.0
         metrics.reporters: prom
         metrics.reporter.prom.interval: 60 SECONDS
+
+        taskmanager.memory.process.size: 24g
+        taskmanager.memory.task.heap.size: 8g
+        taskmanager.memory.managed.size: 8g
+        taskmanager.memory.network.max: 1g
+        taskmanager.memory.framework.heap.size: 1g
+        taskmanager.memory.jvm-overhead.min: 2g
+        taskmanager.memory.jvm-overhead.max: 6g
     ports:
       - "10200:8081"
       - "10210:8083"
@@ -57,7 +60,7 @@ services:
       - S3_PATH_STYLE_ACCESS=true
       - |
         FLINK_PROPERTIES=
-        taskmanager.numberOfTaskSlots: 3
+        taskmanager.numberOfTaskSlots: 13
         taskmanager.memory.process.size: 7g
         taskmanager.memory.task.heap.size: 4g
         taskmanager.memory.managed.size: 1g
@@ -101,16 +104,6 @@ services:
       - kappa
 
   taskmanager4:
-    image: flink:1.20.0
-    environment: *tm-env
-    depends_on:
-      - jobmanager
-    command: taskmanager
-    volumes: *tm-volumes
-    networks:
-      - kappa
-
-  taskmanager5:
     image: flink:1.20.0
     environment: *tm-env
     depends_on:

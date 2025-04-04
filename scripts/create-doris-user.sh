@@ -26,21 +26,13 @@ CREATE TABLE IF NOT EXISTS gdnews2_scores (
     consciousness_value DOUBLE,
 
     -- Raw NEWS2 scores
-    respiratory_rate_score INT,
-    oxygen_saturation_score INT,
-    blood_pressure_score INT,
-    heart_rate_score INT,
-    temperature_score INT,
-    consciousness_score INT,
-    news2_score INT,
-
-    -- Measurements statuses
-    respiratory_rate_status STRING,
-    oxygen_saturation_status STRING,
-    blood_pressure_status STRING,
-    heart_rate_status STRING,
-    temperature_status STRING,
-    consciousness_status STRING,
+    respiratory_rate_score DOUBLE,
+    oxygen_saturation_score DOUBLE,
+    blood_pressure_score DOUBLE,
+    heart_rate_score DOUBLE,
+    temperature_score DOUBLE,
+    consciousness_score DOUBLE,
+    news2_score DOUBLE,
 
     -- Trust gdNEWS2 scores
     respiratory_rate_trust_score DOUBLE,
