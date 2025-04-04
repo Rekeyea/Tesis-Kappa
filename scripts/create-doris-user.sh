@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create user and grant privileges
-docker exec -i kappa-doris-fe-1 mysql -h 127.0.0.1 -P 9030 -u root << EOF
+docker exec -i tesis-kappa-doris-fe-1 mysql -h 127.0.0.1 -P 9030 -u root << EOF
 CREATE USER 'kappa'@'%' IDENTIFIED BY 'kappa';
 GRANT ALL ON *.* TO 'kappa'@'%';
 
