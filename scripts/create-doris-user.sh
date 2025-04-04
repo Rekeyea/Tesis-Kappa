@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS gdnews2_scores (
     routing_timestamp DATETIME,
     scoring_timestamp DATETIME,
 
-    flink_timestamp DATETIME,
+    union_timestamp DATETIME,
     aggregation_timestamp DATETIME,
     storage_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 )

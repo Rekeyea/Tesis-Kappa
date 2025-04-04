@@ -1,0 +1,1088 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 4,
+    "links": [],
+    "panels": [
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 5,
+        "panels": [],
+        "title": "Throughtput and Latency",
+        "type": "row"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "Prometheus"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                }
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 0,
+          "y": 1
+        },
+        "id": 6,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": [
+              "max"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "11.6.0",
+        "targets": [
+          {
+            "editorMode": "code",
+            "expr": "sum(kafka_server_brokertopicmetrics_bytesinpersec{topic=\"raw.measurements\"})",
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "A"
+          }
+        ],
+        "title": "Throughtput",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "mysql",
+          "uid": "Doris"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "s"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 12,
+          "x": 12,
+          "y": 1
+        },
+        "id": 7,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "11.6.0",
+        "targets": [
+          {
+            "dataset": "kappa",
+            "datasource": {
+              "type": "mysql",
+              "uid": "Doris"
+            },
+            "editorMode": "code",
+            "format": "table",
+            "rawQuery": true,
+            "rawSql": "select\n    avg(timestampdiff(second, ingestion_timestamp, aggregation_timestamp)) as `Avg Overall Latency`,\n    avg(timestampdiff(second, ingestion_timestamp, enrichment_timestamp)) as `Avg Enrichment Latency`,\n    avg(timestampdiff(second, enrichment_timestamp, routing_timestamp)) as `Avg Routing Latency`,\n    avg(timestampdiff(second, routing_timestamp, scoring_timestamp)) as `Avg Scoring Latency`,\n    avg(timestampdiff(second, scoring_timestamp, union_timestamp)) as `Avg Union Latency`,\n    avg(timestampdiff(second, union_timestamp, aggregation_timestamp)) as `Avg Aggregation Latency`\nfrom gdnews2_scores",
+            "refId": "A",
+            "sql": {
+              "columns": [
+                {
+                  "parameters": [],
+                  "type": "function"
+                }
+              ],
+              "groupBy": [
+                {
+                  "property": {
+                    "type": "string"
+                  },
+                  "type": "groupBy"
+                }
+              ],
+              "limit": 50
+            },
+            "table": "gdnews2_scores"
+          }
+        ],
+        "title": "Latency",
+        "type": "stat"
+      },
+      {
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 11
+        },
+        "id": 2,
+        "panels": [],
+        "title": "Hardware Usage",
+        "type": "row"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "Prometheus"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "blue"
+                }
+              ]
+            },
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 24,
+          "x": 0,
+          "y": 12
+        },
+        "id": 1,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "11.6.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"jobmanager\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Job Manager",
+            "range": true,
+            "refId": "A"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"tesis-kappa-taskmanager1-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "H"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"tesis-kappa-taskmanager2-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "E"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"tesis-kappa-taskmanager3-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "F"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"tesis-kappa-taskmanager4-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "G"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"kafka-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "I"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"kafka-2\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "J"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"kafka-3\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "K"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"zookeeper-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Zookeeper",
+            "range": true,
+            "refId": "B"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"zookeeper-2\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Zookeeper",
+            "range": true,
+            "refId": "L"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"zookeeper-3\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Zookeeper",
+            "range": true,
+            "refId": "M"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"tesis-kappa-doris-fe-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Frontend",
+            "range": true,
+            "refId": "D"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"tesis-kappa-doris-be-1-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Backend",
+            "range": true,
+            "refId": "C"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"tesis-kappa-doris-be-2-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Backend",
+            "range": true,
+            "refId": "N"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"tesis-kappa-doris-be-3-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Backend",
+            "range": true,
+            "refId": "O"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_cpu_usage_ratio{name=\"minio\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Object Storage",
+            "range": true,
+            "refId": "P"
+          }
+        ],
+        "title": "CPU Usage",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "Prometheus"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "blue"
+                }
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 24,
+          "x": 0,
+          "y": 24
+        },
+        "id": 8,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "11.6.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"jobmanager\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Job Manager",
+            "range": true,
+            "refId": "A"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"tesis-kappa-taskmanager1-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "H"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"tesis-kappa-taskmanager2-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "E"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"tesis-kappa-taskmanager3-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "F"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"tesis-kappa-taskmanager4-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "G"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"kafka-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "I"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"kafka-2\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "J"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"kafka-3\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "K"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"zookeeper-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Zookeeper",
+            "range": true,
+            "refId": "B"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"zookeeper-2\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Zookeeper",
+            "range": true,
+            "refId": "L"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"zookeeper-3\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Zookeeper",
+            "range": true,
+            "refId": "M"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"tesis-kappa-doris-fe-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Frontend",
+            "range": true,
+            "refId": "D"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"tesis-kappa-doris-be-1-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Backend",
+            "range": true,
+            "refId": "C"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"tesis-kappa-doris-be-2-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Backend",
+            "range": true,
+            "refId": "N"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"tesis-kappa-doris-be-3-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Backend",
+            "range": true,
+            "refId": "O"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_memory_usage_bytes{name=\"minio\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Object Storage",
+            "range": true,
+            "refId": "P"
+          }
+        ],
+        "title": "Memory Usage",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "Prometheus"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "blue"
+                }
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 24,
+          "x": 0,
+          "y": 36
+        },
+        "id": 9,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "11.6.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"jobmanager\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Job Manager",
+            "range": true,
+            "refId": "A"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"tesis-kappa-taskmanager1-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "H"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"tesis-kappa-taskmanager2-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "E"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"tesis-kappa-taskmanager3-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "F"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"tesis-kappa-taskmanager4-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Task Manager",
+            "range": true,
+            "refId": "G"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"kafka-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "I"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"kafka-2\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "J"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"kafka-3\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "K"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"zookeeper-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Zookeeper",
+            "range": true,
+            "refId": "B"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"zookeeper-2\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Zookeeper",
+            "range": true,
+            "refId": "L"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"zookeeper-3\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Zookeeper",
+            "range": true,
+            "refId": "M"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"tesis-kappa-doris-fe-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Frontend",
+            "range": true,
+            "refId": "D"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"tesis-kappa-doris-be-1-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Backend",
+            "range": true,
+            "refId": "C"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"tesis-kappa-doris-be-2-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Backend",
+            "range": true,
+            "refId": "N"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"tesis-kappa-doris-be-3-1\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Backend",
+            "range": true,
+            "refId": "O"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "dockerstats_network_transmitted_bytes{name=\"minio\"}",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Object Storage",
+            "range": true,
+            "refId": "P"
+          }
+        ],
+        "title": "Network Transmition",
+        "type": "stat"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "Prometheus"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "blue"
+                }
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 12,
+          "w": 24,
+          "x": 0,
+          "y": 48
+        },
+        "id": 10,
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "percentChangeColorMode": "standard",
+          "reduceOptions": {
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": "",
+            "values": false
+          },
+          "showPercentChange": false,
+          "textMode": "auto",
+          "wideLayout": true
+        },
+        "pluginVersion": "11.6.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "PBFA97CFB590B2093"
+            },
+            "editorMode": "code",
+            "expr": "sum by (instance) (kafka_log_log_totalsize)",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Kafka",
+            "range": true,
+            "refId": "I"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "doris_be_disks_local_used_capacity",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Doris Backend",
+            "range": true,
+            "refId": "C"
+          },
+          {
+            "datasource": {
+              "type": "prometheus",
+              "uid": "Prometheus"
+            },
+            "editorMode": "code",
+            "expr": "minio_cluster_usage_total_bytes",
+            "hide": false,
+            "instant": false,
+            "legendFormat": "Object Storage",
+            "range": true,
+            "refId": "P"
+          }
+        ],
+        "title": "Storage",
+        "type": "stat"
+      }
+    ],
+    "preload": false,
+    "schemaVersion": 41,
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Monitoring3",
+    "uid": "eedq7pehiultsj",
+    "version": 6
+  }
