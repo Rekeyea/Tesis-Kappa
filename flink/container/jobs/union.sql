@@ -207,8 +207,8 @@ CREATE TABLE scores (
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3),
-    union_timestamp TIMESTAMP(3),
-    WATERMARK FOR union_timestamp AS union_timestamp - INTERVAL '10' SECONDS,
+    union_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS,
     PRIMARY KEY (patient_id, window_start) NOT ENFORCED
 ) WITH (
     'connector' = 'upsert-kafka',
@@ -284,8 +284,7 @@ SELECT * FROM (
         MIN(ingestion_timestamp) AS ingestion_timestamp,
         MIN(enrichment_timestamp) AS enrichment_timestamp,
         MIN(routing_timestamp) AS routing_timestamp,
-        MIN(scoring_timestamp) AS scoring_timestamp,
-        CURRENT_TIMESTAMP as union_timestamp
+        MIN(scoring_timestamp) AS scoring_timestamp
     FROM TABLE(
         TUMBLE(
             TABLE unions, 

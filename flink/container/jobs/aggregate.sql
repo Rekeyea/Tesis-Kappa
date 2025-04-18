@@ -38,7 +38,7 @@ CREATE TABLE scores (
     enrichment_timestamp TIMESTAMP(3),
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3),
-    union_timestamp TIMESTAMP(3),
+    union_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
     WATERMARK FOR union_timestamp AS union_timestamp - INTERVAL '10' SECONDS,
     PRIMARY KEY (patient_id, window_start) NOT ENFORCED
 ) WITH (
@@ -89,7 +89,7 @@ CREATE TABLE gdnews2_scores (
     scoring_timestamp TIMESTAMP(3),
     union_timestamp TIMESTAMP(3),
     aggregation_timestamp TIMESTAMP(3) METADATA FROM 'timestamp' VIRTUAL,
-    WATERMARK FOR aggregation_timestamp AS aggregation_timestamp - INTERVAL '10' SECONDS,
+    WATERMARK FOR measurement_timestamp AS measurement_timestamp - INTERVAL '10' SECONDS,
     
     PRIMARY KEY (patient_id, window_start) NOT ENFORCED
 ) WITH (

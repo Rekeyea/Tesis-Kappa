@@ -97,7 +97,7 @@ CREATE TABLE doris_gdnews2_scores (
     routing_timestamp TIMESTAMP(3),
     scoring_timestamp TIMESTAMP(3),
 
-    flink_timestamp TIMESTAMP(3),
+    union_timestamp TIMESTAMP(3),
     aggregation_timestamp TIMESTAMP(3),
     PRIMARY KEY (patient_id, window_start) NOT ENFORCED
 ) WITH (
